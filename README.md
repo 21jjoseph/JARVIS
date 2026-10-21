@@ -14,12 +14,12 @@ the official **Node 22.23.4 Intel build** into this project's `.cache/` director
 verifies its SHA256, and installs the locked dependencies. **nvm is not required**.
 No Python service, account or API key is needed. Internet is needed for setup.
 
-First download the complete source ZIP and extract it on your Mac. Files created
-in a cloud workspace are not automatically copied to your computer. The ZIP
-contains a top-level `JARVIS` folder. For example, if you extract it in Downloads:
+First [download the project ZIP from GitHub](https://github.com/21jjoseph/JARVIS/archive/refs/heads/main.zip)
+and extract it on your Mac. Sign in to GitHub if requested. The GitHub ZIP
+contains a top-level `JARVIS-main` folder. For example, if you extract it in Downloads:
 
 ```sh
-cd "$HOME/Downloads/JARVIS" && bash scripts/start-macos.sh
+cd "$HOME/Downloads/JARVIS-main" && bash scripts/start-macos.sh
 ```
 
 The `&&` stops the command if the directory is missing, so npm cannot accidentally
@@ -27,6 +27,10 @@ run against a different project in your home folder. The launcher uses its own
 location as the working directory and does not change your Conda installation,
 system Node or shell startup files. Initial dependency downloads may take a few
 minutes. Repeat the same command to launch again.
+
+If you have the separate `JARVIS-source.zip` bundle instead, its folder is named
+`JARVIS`; use that folder name in the command. Files created in a cloud workspace
+are not automatically copied to your computer.
 
 If you already have **nvm installed** and prefer to manage Node yourself, use the
 following from the extracted JARVIS folder instead:
