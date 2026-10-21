@@ -16,3 +16,5 @@ npm ci --no-audit
 npm run check:compat
 npm test
 npm run build
+npm run voice:models
+npm run voice:check

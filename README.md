@@ -1,11 +1,12 @@
 # JARVIS
 
-**21Robotics · Personal hybrid AI assistant · Phase 1**
+**21Robotics · Personal hybrid AI assistant · Phase 2**
 
 A local desktop companion built around an animated, metallic ferrofluid avatar.
-This milestone implements the visual desktop shell and real audio analysis.
-Conversation AI, speech recognition, wake words, memory, vision, desktop
-automation and robotics are planned for later phases.
+The ferrofluid avatar now supports local wake-word activation, Romanian/English
+speech recognition, spoken replies and a small voice-command demo. General AI
+conversation, memory, vision, desktop automation and robotics remain later phases.
+No cloud audio processing is used.
 
 ## Monterey / Intel quick start
 
@@ -14,12 +15,13 @@ the official **Node 22.23.4 Intel build** into this project's `.cache/` director
 verifies its SHA256, and installs the locked dependencies. **nvm is not required**.
 No Python service, account or API key is needed. Internet is needed for setup.
 
-First [download the project ZIP from GitHub](https://github.com/21jjoseph/JARVIS/archive/refs/heads/main.zip)
+First [download the Phase 2 ZIP from GitHub](https://github.com/21jjoseph/JARVIS/archive/refs/tags/phase-2.zip)
 and extract it on your Mac. Sign in to GitHub if requested. The GitHub ZIP
-contains a top-level `JARVIS-main` folder. For example, if you extract it in Downloads:
+contains a top-level `JARVIS-phase-2` folder. Quit the older JARVIS before starting
+this version. Extract the ZIP in Downloads, then run:
 
 ```sh
-cd "$HOME/Downloads/JARVIS-main" && bash scripts/start-macos.sh
+cd "$HOME/Downloads/JARVIS-phase-2" && bash scripts/start-macos.sh
 ```
 
 The `&&` stops the command if the directory is missing, so npm cannot accidentally
@@ -31,6 +33,10 @@ minutes. Repeat the same command to launch again.
 If you have the separate `JARVIS-source.zip` bundle instead, its folder is named
 `JARVIS`; use that folder name in the command. Files created in a cloud workspace
 are not automatically copied to your computer.
+
+GitHub's **Code → Download ZIP** button for `main` creates a `JARVIS-main` folder;
+use that folder name for that download. The versioned Phase 2 ZIP keeps your
+older source folder separate.
 
 If you already have **nvm installed** and prefer to manage Node yourself, use the
 following from the extracted JARVIS folder instead:
@@ -53,7 +59,7 @@ notice is informational and does not require updating npm for this project.
 The transparent avatar appears near the lower-right corner of the desktop.
 
 - **Drag the avatar** to move it. Its size and position persist across restarts.
-- **Click** to enable/stop the microphone (a short delay distinguishes double-click).
+- **Click** to start a voice turn after model setup (a short delay distinguishes double-click).
 - **Double-click**, use the dashboard button, or press **⌘⇧J** to open the control room.
 - The **menu-bar/tray menu** shows/hides the avatar, stops audio, opens the dashboard or quits.
 - Closing the dashboard leaves the companion in the menu bar. Use **Quit JARVIS** to exit.
@@ -63,7 +69,39 @@ The transparent avatar appears near the lower-right corner of the desktop.
 macOS asks for microphone access when you enable it. If blocked, open
 **System Preferences → Security & Privacy → Privacy → Microphone**, allow the app
 or development host shown there, then restart it. Camera and screen permissions
-are denied in Phase 1.
+are denied in this version.
+
+## Use Phase 2 voice
+
+1. Open the dashboard and select **Audio & privacy** (Romanian: **Audio & confidențialitate**).
+2. Click **Download voice models / Descarcă modelele vocale** once. The approximately
+   **268 MB** download contains local Whisper, keyword and Romanian/English Piper
+   models. SHA256 checks run before files are used. Installed data occupies about
+   422 MiB. Microphone audio and transcripts are never sent with downloads.
+3. Select Romanian or English, then click **Press to talk / Apasă și vorbește**.
+   Speak a command and pause. Local VAD ends the utterance and JARVIS replies.
+4. Or enable **“Jarvis”**, say the wake phrase, wait for **“Da, te ascult” / “Yes,
+   I am listening”**, then speak. The microphone stays active locally while armed.
+5. **Stop / mute** ends capture. **Interrupt and talk** cancels a reply/inference
+   and starts a new turn. Closing, hiding or minimizing the owning window ends
+   the session. Voice never arms automatically at launch.
+
+Try **“Cât este ceasul?”**, **“Deschide panoul de control”**, **“Salut”**, or
+**“What time is it?”**, **“Open the control room”**, **“Hello”** in English.
+These are bounded local commands; arbitrary requests receive an explanation of
+the demo. The latest recognized phrase and reply remain in memory only.
+General conversational AI comes in Phase 3.
+
+Manual microphone/amplitude testing remains available in the audio panel. Wake
+phrase, language, microphone device, rate and voice provider are configurable.
+Piper supplies portable local Mihai/Amy voices. The optional **macOS system voice**
+provider uses installed voices through `/usr/bin/say` and measures actual WAV
+playback through Web Audio; that provider still needs a native Mac check.
+
+Whisper tiny can make transcription mistakes, especially on short/noisy Romanian
+phrases. The keyword model is English; pronunciation affects detection. Use
+push-to-talk when needed. Automatic acoustic barge-in is not enabled; use the
+interruption button. Recognition is utterance-based, without partial token streaming.
 
 ## What works
 
@@ -96,6 +134,8 @@ npm run check:compat   # pins, lockfile, Monterey/x64 configuration
 npm run typecheck
 npm test              # state, validation, settings, audio maths, origin policy
 npm run build         # strict checks + renderer and Electron production bundles
+npm run voice:models  # verified local models; also available as a dashboard button
+npm run voice:check   # five actual keyword / STT / TTS checks; generates test WAVs
 npm start             # built desktop app
 npm run test:e2e      # real Electron test; needs a graphical display
 ```
@@ -160,5 +200,5 @@ codec availability depends on Electron.
 
 See the [complete created-file manifest](docs/files.md) for the exact project files.
 
-Next: local voice activation and STT/TTS, then hybrid AI/tools, user-controlled
-memory, and simulation-first robotics. Complete native Phase 1 checks first.
+Next: validate Phase 2 on the target Mac, then implement hybrid AI/tools,
+user-controlled memory, and simulation-first robotics. See [Phase 2 details](docs/voice.md).

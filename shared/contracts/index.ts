@@ -10,7 +10,8 @@ export const AVATAR_STATES = [
 ] as const;
 export type AvatarState = (typeof AVATAR_STATES)[number];
 export type Quality = 'auto' | 'low' | 'high';
-export type AudioSource = 'none' | 'microphone' | 'playback' | 'test';
+import type { VoiceBridge, VoiceLanguage } from './voice';
+export type AudioSource = 'none' | 'microphone' | 'playback' | 'test' | 'voice';
 export interface Settings {
   version: 1;
   color: string;
@@ -23,6 +24,11 @@ export interface Settings {
   clickThrough: boolean;
   microphoneDeviceId: string;
   locale: 'ro' | 'en';
+  voiceLanguage: VoiceLanguage;
+  wakeWord: string;
+  speechRate: number;
+  ttsProvider: 'piper' | 'system';
+  systemVoice: string;
   position: { x: number; y: number } | null;
 }
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -37,6 +43,11 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   clickThrough: true,
   microphoneDeviceId: '',
   locale: 'ro',
+  voiceLanguage: 'ro',
+  wakeWord: 'jarvis',
+  speechRate: 1,
+  ttsProvider: 'piper',
+  systemVoice: '',
   position: null,
 });
 export interface Runtime {
@@ -58,6 +69,7 @@ export interface Snapshot {
   capabilities: Capabilities;
 }
 export interface DesktopBridge {
+  voice: VoiceBridge;
   getSnapshot(): Promise<Snapshot>;
   updateSettings(patch: Partial<Settings>): Promise<Snapshot>;
   selectState(state: AvatarState): Promise<Snapshot>;
@@ -113,7 +125,20 @@ export function validateSettingsPatch(input: unknown): Partial<Settings> {
         valid = typeof value === 'string' && value.length <= 256;
         break;
       case 'locale':
+      case 'voiceLanguage':
         valid = value === 'ro' || value === 'en';
+        break;
+      case 'wakeWord':
+        valid = typeof value === 'string' && /^[a-zA-Z]{2,20}( [a-zA-Z]{2,20})?$/.test(value);
+        break;
+      case 'speechRate':
+        valid = inRange(value, 0.7, 1.4);
+        break;
+      case 'ttsProvider':
+        valid = value === 'piper' || value === 'system';
+        break;
+      case 'systemVoice':
+        valid = typeof value === 'string' && value.length <= 100 && !/[\r\n\0]/.test(value);
         break;
       case 'position':
         valid =

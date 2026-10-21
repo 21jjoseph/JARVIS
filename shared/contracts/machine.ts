@@ -4,6 +4,7 @@ export type Event =
   | { type: 'AUDIO_START'; source: Exclude<AudioSource, 'none'> }
   | { type: 'AMPLITUDE'; value: number }
   | { type: 'AUDIO_STOP' }
+  | { type: 'VOICE_PHASE'; state: AvatarState }
   | { type: 'ERROR'; message: string };
 export const INITIAL_RUNTIME: Runtime = {
   state: 'IDLE',
@@ -22,7 +23,7 @@ export function transition(current: Runtime, event: Event): Runtime {
     case 'AUDIO_START':
       if (current.source !== 'none') throw new Error('An audio session is already active.');
       return {
-        state: event.source === 'microphone' ? 'LISTENING' : 'SPEAKING',
+        state: event.source === 'microphone' || event.source === 'voice' ? 'LISTENING' : 'SPEAKING',
         source: event.source,
         amplitude: 0,
         notice: null,
@@ -33,6 +34,10 @@ export function transition(current: Runtime, event: Event): Runtime {
         : { ...current, amplitude: Math.max(0, Math.min(1, event.value)) };
     case 'AUDIO_STOP':
       return { ...INITIAL_RUNTIME };
+    case 'VOICE_PHASE':
+      return current.source === 'voice'
+        ? { ...current, state: event.state, amplitude: 0 }
+        : current;
     case 'ERROR':
       return { state: 'ERROR', source: 'none', amplitude: 0, notice: event.message.slice(0, 200) };
   }

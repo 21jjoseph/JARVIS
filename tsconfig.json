@@ -19,6 +19,7 @@
   },
   "include": [
     "apps",
+    "scripts/*.ts",
     "shared",
     "tests",
     "vite.config.ts",

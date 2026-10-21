@@ -1,7 +1,31 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { DesktopBridge, Snapshot } from '../../../shared/contracts';
+import type { VoiceStatus, VoiceAudio } from '../../../shared/contracts/voice';
 
 const bridge: DesktopBridge = {
+  voice: {
+    systemVoices: () => ipcRenderer.invoke('voice:system-voices'),
+    status: () => ipcRenderer.invoke('voice:status'),
+    install: () => ipcRenderer.invoke('voice:install'),
+    start: (mode) => ipcRenderer.invoke('voice:start', mode),
+    feed: (samples) => ipcRenderer.invoke('voice:feed', samples),
+    stop: () => ipcRenderer.invoke('voice:stop'),
+    playbackEnded: (id) => ipcRenderer.invoke('voice:played', id),
+    onStatus: (callback) => {
+      const handler = (_event: unknown, status: VoiceStatus) => callback(status);
+      ipcRenderer.on('voice:status', handler);
+      return () => {
+        ipcRenderer.removeListener('voice:status', handler);
+      };
+    },
+    onAudio: (callback) => {
+      const handler = (_event: unknown, audio: VoiceAudio) => callback(audio);
+      ipcRenderer.on('voice:audio', handler);
+      return () => {
+        ipcRenderer.removeListener('voice:audio', handler);
+      };
+    },
+  },
   getSnapshot: () => ipcRenderer.invoke('jarvis:snapshot'),
   updateSettings: (patch) => ipcRenderer.invoke('jarvis:settings', patch),
   selectState: (state) => ipcRenderer.invoke('jarvis:state', state),

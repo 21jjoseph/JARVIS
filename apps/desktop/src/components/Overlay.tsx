@@ -5,7 +5,7 @@ import { copy } from '../services/i18n';
 import { Icon } from './Icon';
 
 export function Overlay() {
-  const { snapshot, audio, audioActive, run, error, bridge } = useJarvis();
+  const { snapshot, audio, audioActive, run, error, bridge, voice, voiceStatus } = useJarvis();
   const drag = useRef<{
     x: number;
     y: number;
@@ -33,6 +33,22 @@ export function Overlay() {
       </div>
     );
   const t = copy[snapshot.settings.locale];
+  const activate = async () => {
+    if (snapshot.runtime.source === 'voice') {
+      await bridge.voice.stop();
+      return;
+    }
+    if (audioActive) await audio.stop();
+    if (!voiceStatus.modelsReady) {
+      await bridge.openDashboard();
+      throw new Error(
+        snapshot.settings.locale === 'ro'
+          ? 'Descarcă modelele vocale din panou pentru a activa vocea.'
+          : 'Download the voice models in the dashboard to enable voice.',
+      );
+    }
+    await voice.start('push', snapshot.settings);
+  };
   return (
     <div className="overlay" style={{ '--accent': snapshot.settings.color } as React.CSSProperties}>
       <Ferrofluid runtime={snapshot.runtime} settings={snapshot.settings} />
@@ -55,9 +71,7 @@ export function Overlay() {
           if (e.key === 'Enter') void run(() => bridge.openDashboard());
           if (e.code === 'Space') {
             e.preventDefault();
-            void run(() =>
-              audioActive ? audio.stop() : audio.microphone(snapshot.settings.microphoneDeviceId),
-            );
+            if (!e.repeat) void run(activate);
           }
         }}
         onPointerDown={(e) => {
@@ -105,9 +119,7 @@ export function Overlay() {
           clearTimeout(clickTimer.current);
           if (e.detail === 1)
             clickTimer.current = setTimeout(() => {
-              void run(() =>
-                audioActive ? audio.stop() : audio.microphone(snapshot.settings.microphoneDeviceId),
-              );
+              void run(activate);
             }, 500);
         }}
         onDoubleClick={() => {

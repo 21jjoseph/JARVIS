@@ -5,6 +5,7 @@ import { Icon, type IconName } from '../components/Icon';
 import { useJarvis } from '../hooks/useJarvis';
 import { copy } from '../services/i18n';
 import { SettingsPanel } from './SettingsPanel';
+import { VoicePanel } from '../voice/VoicePanel';
 
 type Tab = 'overview' | 'lab' | 'audio' | 'settings';
 const NAV: { id: Tab; icon: IconName; number: string }[] = [
@@ -14,7 +15,7 @@ const NAV: { id: Tab; icon: IconName; number: string }[] = [
   { id: 'settings', icon: 'sliders', number: '04' },
 ];
 export function Dashboard() {
-  const { snapshot, error, audio, audioActive, run, bridge } = useJarvis();
+  const { snapshot, error, audio, audioActive, run, bridge, voice, voiceStatus } = useJarvis();
   const [tab, setTab] = useState<Tab>('overview');
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [pending, setPending] = useState(false);
@@ -43,7 +44,8 @@ export function Dashboard() {
     );
   const { settings, runtime, capabilities } = snapshot;
   const t = copy[settings.locale];
-  const activeElsewhere = runtime.source !== 'none' && !audioActive && !pending;
+  const activeElsewhere =
+    runtime.source !== 'none' && runtime.source !== 'voice' && !audioActive && !pending;
   const stateIcon = (state: AvatarState): IconName =>
     state === 'LISTENING' ? 'mic' : state === 'SPEAKING' ? 'wave' : 'orb';
   const chooseState = (state: AvatarState) => action(() => bridge.selectState(state));
@@ -111,7 +113,7 @@ export function Dashboard() {
       </div>
       <button
         className={`primary-button ${audioActive ? 'recording' : ''}`}
-        disabled={pending || activeElsewhere}
+        disabled={pending || activeElsewhere || runtime.source === 'voice'}
         onClick={() =>
           action(() => (audioActive ? audio.stop() : audio.microphone(settings.microphoneDeviceId)))
         }
@@ -192,7 +194,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="workspace-label">
-          PERSONAL COMPANION <span>V.01</span>
+          PERSONAL COMPANION <span>V.02</span>
         </div>
         <nav aria-label="Main navigation">
           {NAV.map((item) => (
@@ -225,7 +227,7 @@ export function Dashboard() {
           </div>
           <div className="system-version">
             <span>JARVIS CORE</span>
-            <span>0.1.0</span>
+            <span>0.2.0</span>
           </div>
           <button
             className="quit-button"
@@ -280,6 +282,16 @@ export function Dashboard() {
             />
           ) : (
             <>
+              {tab === 'audio' && (
+                <VoicePanel
+                  settings={settings}
+                  status={voiceStatus}
+                  voice={voice}
+                  desktop={capabilities.desktop}
+                  platform={capabilities.platform}
+                  run={run}
+                />
+              )}
               {tab === 'audio' && (
                 <div className="audio-intro">
                   <h2>{t.audioTitle}</h2>
@@ -336,6 +348,16 @@ export function Dashboard() {
                 </section>
                 {audioPanel}
               </div>
+              {tab === 'overview' && (
+                <VoicePanel
+                  settings={settings}
+                  status={voiceStatus}
+                  voice={voice}
+                  desktop={capabilities.desktop}
+                  platform={capabilities.platform}
+                  run={run}
+                />
+              )}
               {states}
               {tab === 'lab' && (
                 <SettingsPanel
@@ -377,7 +399,7 @@ export function Dashboard() {
             <span>
               21ROBOTICS <span className="footer-divider">/</span> PROJECT J.A.R.V.I.S.
             </span>
-            <span>{capabilities.platform.toUpperCase()} · PHASE 01</span>
+            <span>{capabilities.platform.toUpperCase()} · PHASE 02</span>
           </footer>
           {tab === 'settings' && (
             <p className="roadmap">

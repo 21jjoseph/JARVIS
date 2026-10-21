@@ -1,6 +1,6 @@
 # Future local service
 
-Phase 1 runs entirely inside Electron and starts no Python service. FastAPI,
+Phases 1–2 run inside Electron and start no Python service. FastAPI,
 WebSockets, Pydantic, SQLite memory, AI routing and robotics belong to later
 milestones. No unimplemented endpoint is presented as active.
 

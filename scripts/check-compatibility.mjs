@@ -12,6 +12,15 @@ assert(
 assert.equal(process.versions.node.split('.')[0], '22', 'Run checks with Node 22 (nvm use).');
 assert(readFileSync('.nvmrc', 'utf8').trim().startsWith('22.'));
 assert.equal(lock.packages['node_modules/electron'].version, pkg.devDependencies.electron);
+assert(
+  !lock.packages['node_modules/sherpa-onnx-node'],
+  'Use the portable speech package; the checked native addon requires newer macOS.',
+);
+const wasm = readFileSync('node_modules/sherpa-onnx/sherpa-onnx-wasm-nodejs.wasm');
+assert(
+  wasm.subarray(0, 4).equals(Buffer.from([0, 97, 115, 109])),
+  'Missing portable speech WASM binary.',
+);
 for (const [name, version] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
   assert(/^\d+\.\d+\.\d+$/.test(version), `${name} must be exactly pinned.`);
   assert.equal(lock.packages[`node_modules/${name}`].version, version, `${name} lockfile drift.`);

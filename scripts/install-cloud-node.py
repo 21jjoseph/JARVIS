@@ -24,5 +24,12 @@ if not archive.exists():
         shutil.copyfileobj(response, target)
 assert hashlib.sha256(archive.read_bytes()).hexdigest() == expected, 'Node archive SHA256 mismatch'
 with tarfile.open(archive) as tar:
-    tar.extractall(directory, filter='data')
-print(f'Installed official Node {version} / {arch}, SHA256 verified.')
+    installed = directory / f'node-v{version}-linux-{arch}' / 'bin' / 'node'
+    member = tar.extractfile(f'node-v{version}-linux-{arch}/bin/node')
+    assert member is not None
+    expected_binary = hashlib.sha256(member.read()).digest()
+    if installed.is_file() and hashlib.sha256(installed.read_bytes()).digest() == expected_binary:
+        print(f'Reused official Node {version} / {arch}, archive and binary SHA256 verified.')
+    else:
+        tar.extractall(directory, filter='data')
+        print(f'Installed official Node {version} / {arch}, SHA256 verified.')

@@ -8,6 +8,7 @@ import {
   nativeImage,
   screen,
   session,
+  net,
 } from 'electron';
 import type { IpcMainInvokeEvent, IpcMainEvent, WebContents } from 'electron';
 import { join } from 'node:path';
@@ -22,6 +23,9 @@ import {
 import { INITIAL_RUNTIME, transition } from '../../../shared/contracts/machine';
 import { SettingsStore } from './settings';
 import { clampPosition, safeDevUrl, trustedRendererUrl } from './policy';
+import { VoiceController } from './voice/controller';
+import { validatePcm, type VoicePhase } from '../../../shared/contracts/voice';
+import { systemVoices } from './voice/system-speech';
 
 const devUrl = safeDevUrl(process.env.JARVIS_DEV_URL);
 const indexPath = join(__dirname, '../dist/index.html');
@@ -37,6 +41,7 @@ let moveTimer: ReturnType<typeof setTimeout> | undefined;
 let quitting = false;
 let finalQuit = false;
 let lastAmplitudeAt = 0;
+let voice: VoiceController | undefined;
 const capabilities: Capabilities = {
   desktop: true,
   platform: process.platform,
@@ -71,6 +76,13 @@ function guard(event: IpcMainInvokeEvent | IpcMainEvent) {
     throw new Error('Untrusted IPC sender.');
 }
 function releaseAudio() {
+  if (voice?.active) {
+    voice.stop();
+    return;
+  }
+  clearAudio();
+}
+function clearAudio() {
   const owner = allWindows().find((w) => w.webContents.id === audioOwner);
   owner?.webContents.send('jarvis:audio-stop');
   audioOwner = null;
@@ -224,6 +236,18 @@ function registerIpc() {
   handle('jarvis:snapshot', () => snapshot());
   handle('jarvis:settings', async (_event, input) => {
     const patch = validateSettingsPatch(input);
+    if (
+      voice?.active &&
+      [
+        'wakeWord',
+        'voiceLanguage',
+        'speechRate',
+        'microphoneDeviceId',
+        'ttsProvider',
+        'systemVoice',
+      ].some((key) => key in patch)
+    )
+      throw new Error('Stop the voice session before changing voice settings.');
     if (patch.position !== undefined || patch.version !== undefined)
       throw new Error('Position and version are managed by the application.');
     if (patch.launchAtLogin !== undefined) {
@@ -283,6 +307,23 @@ function registerIpc() {
   });
   handle('jarvis:audio-release', (event) => {
     if (audioOwner === event.sender.id) releaseAudio();
+  });
+  handle('voice:status', () => voice!.snapshot);
+  handle('voice:system-voices', () => systemVoices());
+  handle('voice:install', () =>
+    voice!.install(((input: string | URL | Request, init?: RequestInit) =>
+      net.fetch(String(input), init)) as typeof fetch),
+  );
+  handle('voice:start', (event, mode) => {
+    if (mode !== 'push' && mode !== 'wake') throw new Error('Invalid voice mode.');
+    return voice!.start(event.sender.id, mode);
+  });
+  handle('voice:feed', (event, samples) => voice!.feed(event.sender.id, validatePcm(samples)));
+  handle('voice:stop', () => voice!.stop());
+  handle('voice:played', (event, id) => {
+    if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0)
+      throw new Error('Invalid playback identifier.');
+    voice!.playbackEnded(event.sender.id, id);
   });
   handle('jarvis:quit', () => {
     app.quit();
@@ -367,6 +408,57 @@ if (!app.requestSingleInstanceLock()) {
       });
       session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => callback({}));
       registerIpc();
+      voice = new VoiceController({
+        root:
+          process.env.JARVIS_VOICE_MODELS_DIR ||
+          (app.isPackaged
+            ? join(app.getPath('userData'), 'voice-models')
+            : join(__dirname, '../.cache/voice-models')),
+        workerPath: app.isPackaged
+          ? join(process.resourcesPath, 'app.asar.unpacked/dist-electron/voice-worker.cjs')
+          : join(__dirname, 'voice-worker.cjs'),
+        settings: () => store.value,
+        claim: (owner) => {
+          const window = allWindows().find((win) => win.webContents.id === owner);
+          if (audioOwner !== null) throw new Error('Stop the current audio session first.');
+          if (!window?.isVisible() || window.isMinimized())
+            throw new Error('Show the JARVIS window before starting voice.');
+          audioOwner = owner;
+          runtime = transition(runtime, { type: 'AUDIO_START', source: 'voice' });
+          broadcast();
+        },
+        release: clearAudio,
+        changed: (status) => {
+          for (const win of allWindows()) win.webContents.send('voice:status', status);
+        },
+        phase: (phase: VoicePhase) => {
+          if (phase === 'ERROR')
+            runtime = transition(runtime, {
+              type: 'ERROR',
+              message: 'Voice processing failed. Open Audio & privacy for details.',
+            });
+          else
+            runtime = transition(runtime, {
+              type: 'VOICE_PHASE',
+              state:
+                phase === 'SPEAKING'
+                  ? 'SPEAKING'
+                  : phase === 'TRANSCRIBING' || phase === 'SYNTHESIZING' || phase === 'STARTING'
+                    ? 'THINKING'
+                    : phase === 'OFF'
+                      ? 'IDLE'
+                      : 'LISTENING',
+            });
+          broadcast();
+        },
+        audio: (owner, audio) => {
+          allWindows()
+            .find((win) => win.webContents.id === owner)
+            ?.webContents.send('voice:audio', audio);
+        },
+        openDashboard,
+      });
+      await voice.initialize();
       createOverlay();
       createTray();
       capabilities.shortcut = globalShortcut.register('CommandOrControl+Shift+J', () => {

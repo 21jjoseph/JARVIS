@@ -17,30 +17,38 @@ Native artifacts were fetched over verified HTTPS. npm tarballs were checked
 against lockfile SHA512 integrity, Node against its official SHA256 manifest,
 and Electron with its checksum-validating download helper.
 
-| Component                   | Version                | Monterey / Intel evidence                                                                                                                        |
-| --------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Electron                    | 43.8.3                 | Intel executable, framework, helpers and dylibs declare minimum macOS **12.0** in Mach-O load commands                                           |
-| Node.js                     | 22.23.4                | Official x64 binary declares minimum **11.0**; Node 22 officially supports macOS 11+                                                             |
-| React / React DOM           | 19.3.1                 | JavaScript only, executed in Electron Chromium; no additional native minimum                                                                     |
-| Three.js / types            | 0.186.1 / 0.186.0      | JavaScript/WebGL2 and types; actually rendered in Electron 43                                                                                    |
-| Vite / React plugin         | 8.3.5 / 6.1.2          | Node 22.12+ supported; production build passes under Node 22                                                                                     |
-| Rolldown Intel binding      | 1.2.15                 | Native minimum **10.12**                                                                                                                         |
-| Lightning CSS Intel binding | 1.33.0                 | Native minimum **10.12**                                                                                                                         |
-| esbuild                     | 0.28.2                 | Intel executable minimum **12.0**                                                                                                                |
-| fsevents                    | 2.3.3                  | Native minimum **10.15**                                                                                                                         |
-| Electron ZIP extractor      | 1.0.5                  | Intel slice of universal binary minimum **10.12**                                                                                                |
-| TypeScript                  | 5.9.3                  | JavaScript tool; strict checks pass on Node 22                                                                                                   |
-| Vitest                      | 5.0.5                  | Node 22.12+; unit suite passes                                                                                                                   |
-| Playwright test             | 1.64.1                 | Node 20+; tests installed Electron directly, without a newer browser download                                                                    |
-| electron-builder            | 26.15.3                | Works under Node 22; successfully creates Intel `.app`, plist and binary both targeting **12.0**                                                 |
-| Python                      | Optional 3.12 baseline | CPython 3.12's official universal2 build recipe defaults to minimum **10.9**; no interpreter or Python package is bundled or required by Phase 1 |
+| Component                   | Version                | Monterey / Intel evidence                                                                                                                           |
+| --------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Electron                    | 43.8.3                 | Intel executable, framework, helpers and dylibs declare minimum macOS **12.0** in Mach-O load commands                                              |
+| Node.js                     | 22.23.4                | Official x64 binary declares minimum **11.0**; Node 22 officially supports macOS 11+                                                                |
+| React / React DOM           | 19.3.1                 | JavaScript only, executed in Electron Chromium; no additional native minimum                                                                        |
+| Three.js / types            | 0.186.1 / 0.186.0      | JavaScript/WebGL2 and types; actually rendered in Electron 43                                                                                       |
+| Vite / React plugin         | 8.3.5 / 6.1.2          | Node 22.12+ supported; production build passes under Node 22                                                                                        |
+| Rolldown Intel binding      | 1.2.15                 | Native minimum **10.12**                                                                                                                            |
+| Lightning CSS Intel binding | 1.33.0                 | Native minimum **10.12**                                                                                                                            |
+| esbuild                     | 0.28.2                 | Intel executable minimum **12.0**                                                                                                                   |
+| fsevents                    | 2.3.3                  | Native minimum **10.15**                                                                                                                            |
+| Electron ZIP extractor      | 1.0.5                  | Intel slice of universal binary minimum **10.12**                                                                                                   |
+| TypeScript                  | 5.9.3                  | JavaScript tool; strict checks pass on Node 22                                                                                                      |
+| Vitest                      | 5.0.5                  | Node 22.12+; unit suite passes                                                                                                                      |
+| Playwright test             | 1.64.1                 | Node 20+; tests installed Electron directly, without a newer browser download                                                                       |
+| electron-builder            | 26.15.3                | Works under Node 22; successfully creates Intel `.app`, plist and binary both targeting **12.0**                                                    |
+| Python                      | Optional 3.12 baseline | CPython 3.12's official universal2 build recipe defaults to minimum **10.9**; no interpreter or Python package is bundled or required by Phases 1–2 |
+| Local speech runtime        | sherpa-onnx 1.13.8     | Pure WebAssembly + JavaScript, actually executed under Node 22 and Electron 43; no new Mach-O addon                                                 |
 
 Type-only packages have no runtime platform requirements. React, React DOM and
-Three.js are the only production npm dependencies. FastAPI, PySerial, MQTT,
-vision, voice models and CoppeliaSim dependencies are not installed yet; verify
+Three.js plus the portable `sherpa-onnx` runtime are the production npm dependencies.
+FastAPI, PySerial, MQTT, vision and CoppeliaSim are not installed yet; verify
 them when their phases are implemented. Python's installer and any future
 native extension must explicitly support Monterey; do not add a Python version
 or package requiring macOS 13.
+
+The native `sherpa-onnx-node@1.13.8` addon was inspected and rejected because its
+Intel `.node` binary targets macOS **15.0**. Checked 1.12.14 and 1.12.7 binaries
+target **13.0** and **13.7**. The selected WASM package requires Node 18+ and runs
+inside the compatible Electron/Node runtime. The optional macOS system voice
+adapter uses the long-standing `/usr/bin/say` API; actual native execution remains
+unverified. See [Phase 2 voice](voice.md) for model and privacy details.
 
 The artifact audit checks metadata and x64 slices. It does not execute Darwin
 binaries, prove all system symbols are available or measure an Intel GPU.

@@ -1,5 +1,6 @@
 import { DEFAULT_SETTINGS, type DesktopBridge, type Snapshot } from '../../../../shared/contracts';
 import { INITIAL_RUNTIME, transition } from '../../../../shared/contracts/machine';
+import { INITIAL_VOICE } from '../../../../shared/contracts/voice';
 declare global {
   interface Window {
     jarvis?: DesktopBridge;
@@ -24,6 +25,21 @@ function browserBridge(): DesktopBridge {
     subscribers.forEach((fn) => fn(structuredClone(value)));
   }
   return {
+    voice: {
+      systemVoices: async () => [],
+      status: async () => ({ ...INITIAL_VOICE }),
+      install: async () => {
+        throw new Error('Local voice models require the Electron desktop app.');
+      },
+      start: async () => {
+        throw new Error('Voice interaction requires the Electron desktop app.');
+      },
+      stop: async () => {},
+      feed: async () => {},
+      playbackEnded: async () => {},
+      onStatus: () => () => {},
+      onAudio: () => () => {},
+    },
     getSnapshot: async () => structuredClone(value),
     updateSettings: async (patch) => {
       value = { ...value, settings: { ...value.settings, ...patch } };

@@ -6,7 +6,7 @@ export const copy = {
     settings: 'Preferințe',
     ready: 'Sistem local activ',
     local: 'DOAR LOCAL',
-    phase: 'FAZA 01 / PREZENȚĂ',
+    phase: 'FAZA 02 / VOCE LOCALĂ',
     title: 'Inteligență în',
     titleEm: 'formă fluidă.',
     intro:
@@ -53,7 +53,7 @@ export const copy = {
     quit: 'Închide JARVIS',
     future: 'Urmează',
     futureDesc:
-      'Voce conversațională → AI hibrid → memorie → viziune & robotică. Aceste integrări nu sunt active în Faza 1.',
+      'Urmează AI hibrid → memorie → viziune & robotică. Faza 2 oferă comenzi vocale locale și răspunsuri vorbite.',
     graphics: 'GRAFICĂ PROCEDURALĂ',
     offline: 'INDEPENDENT DE CLOUD',
     private: 'PRIVAT IMPLICIT',
@@ -68,7 +68,7 @@ export const copy = {
     settings: 'Preferences',
     ready: 'Local system online',
     local: 'LOCAL ONLY',
-    phase: 'PHASE 01 / PRESENCE',
+    phase: 'PHASE 02 / LOCAL VOICE',
     title: 'Intelligence in',
     titleEm: 'fluid form.',
     intro:
@@ -115,7 +115,7 @@ export const copy = {
     quit: 'Quit JARVIS',
     future: 'On the horizon',
     futureDesc:
-      'Conversational voice → hybrid AI → memory → vision & robotics. These integrations are not active in Phase 1.',
+      'Next: hybrid AI → memory → vision & robotics. Phase 2 provides local voice commands and spoken replies.',
     graphics: 'PROCEDURAL GRAPHICS',
     offline: 'CLOUD INDEPENDENT',
     private: 'PRIVATE BY DEFAULT',

@@ -1,6 +1,6 @@
 {
   "name": "jarvis-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "21Robotics JARVIS — a local, audio-reactive ferrofluid desktop companion",
   "author": "21Robotics",
@@ -18,6 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "voice:models": "node scripts/build-electron.mjs && node dist-electron/voice-models-cli.cjs",
+    "voice:check": "node scripts/build-electron.mjs && node dist-electron/verify-voice.cjs",
     "build": "npm run typecheck && vite build && node scripts/build-electron.mjs",
     "start": "electron .",
     "package": "npm run build && electron-builder --dir",
@@ -28,6 +30,7 @@
   "dependencies": {
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "sherpa-onnx": "1.13.8",
     "three": "0.186.1"
   },
   "devDependencies": {
@@ -55,6 +58,10 @@
       "dist-electron/**/*",
       "package.json"
     ],
+    "asarUnpack": [
+      "dist-electron/voice-worker.cjs",
+      "node_modules/sherpa-onnx/**/*"
+    ],
     "mac": {
       "category": "public.app-category.productivity",
       "minimumSystemVersion": "12.0",
@@ -67,7 +74,7 @@
         }
       ],
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "JARVIS uses your microphone locally to animate the avatar when you enable listening. Audio is never recorded or uploaded.",
+        "NSMicrophoneUsageDescription": "JARVIS processes microphone audio on this device for wake-word detection, speech transcription, and avatar animation after you enable listening. Microphone audio is never saved or uploaded.",
         "NSCameraUsageDescription": "Camera features are not available in this version."
       }
     },
