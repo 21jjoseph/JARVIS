@@ -1,0 +1,31 @@
+import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
+const major = Number(pkg.devDependencies.electron.split('.')[0]);
+assert(major >= 38 && major <= 43, 'Electron must support Monterey (38–43); never install 44+.');
+assert.equal(pkg.build.mac.minimumSystemVersion, '12.0');
+assert(
+  pkg.build.mac.target.every((t) => t.arch.length === 1 && t.arch[0] === 'x64'),
+  'Default Mac artifacts must target Intel x64.',
+);
+assert.equal(process.versions.node.split('.')[0], '22', 'Run checks with Node 22 (nvm use).');
+assert(readFileSync('.nvmrc', 'utf8').trim().startsWith('22.'));
+assert.equal(lock.packages['node_modules/electron'].version, pkg.devDependencies.electron);
+for (const [name, version] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
+  assert(/^\d+\.\d+\.\d+$/.test(version), `${name} must be exactly pinned.`);
+  assert.equal(lock.packages[`node_modules/${name}`].version, version, `${name} lockfile drift.`);
+}
+for (const name of [
+  '@esbuild/darwin-x64',
+  '@rolldown/binding-darwin-x64',
+  'lightningcss-darwin-x64',
+]) {
+  assert(lock.packages[`node_modules/${name}`], `Missing Intel macOS build tool: ${name}`);
+}
+console.log(
+  `Compatibility configuration passed: Node ${process.versions.node}, Electron ${pkg.devDependencies.electron}, macOS 12.0 / x64.`,
+);
+console.log(
+  'This checks configuration and lockfile. Run scripts/check-macos-artifacts.py for Mach-O deployment targets; native Monterey testing is still required.',
+);

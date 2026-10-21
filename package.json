@@ -1,0 +1,86 @@
+{
+  "name": "jarvis-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "21Robotics JARVIS — a local, audio-reactive ferrofluid desktop companion",
+  "author": "21Robotics",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install-electron.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "build": "npm run typecheck && vite build && node scripts/build-electron.mjs",
+    "start": "electron .",
+    "package": "npm run build && electron-builder --dir",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "check:compat": "node scripts/check-compatibility.mjs",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "43.8.3",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  },
+  "build": {
+    "appId": "ro.21robotics.jarvis",
+    "productName": "JARVIS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "minimumSystemVersion": "12.0",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "JARVIS uses your microphone locally to animate the avatar when you enable listening. Audio is never recorded or uploaded.",
+        "NSCameraUsageDescription": "Camera features are not available in this version."
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
+  }
+}
