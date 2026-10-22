@@ -46,6 +46,17 @@ if not stamp.exists() or stamp.read_text() != fingerprint:
                     '--target',str(site),'--upgrade','--no-compile',
                     '-r',str(ROOT/'services/backend/requirements.lock')],check=True)
     stamp.write_text(fingerprint)
+# Include only a native engine built and receipted for the packaging platform.
+engine=ROOT/'.cache/local-engine/build/bin'/('llama-server.exe' if win else 'llama-server')
+receipt=ROOT/'.cache/local-engine/installed.json'
+engine_target=base/('python/llama-server.exe' if win else 'python/bin/llama-server')
+if engine.is_file() and receipt.is_file() and ((mac and sys.platform=='darwin') or (win and sys.platform=='win32') or (not mac and not win and sys.platform=='linux')):
+    record=json.loads(receipt.read_text())
+    pin_engine=json.loads((ROOT/'configs/local-engine.json').read_text())
+    assert record['revision']==pin_engine['revision'] and record['platform']==sys.platform
+    assert hashlib.sha256(engine.read_bytes()).hexdigest()==record['sha256'],'Local engine receipt mismatch'
+    shutil.copy2(engine,engine_target)
+    print('Included the native CPU engine; no weights are bundled.')
 if mac:
     spec = importlib.util.spec_from_file_location('audit',ROOT/'scripts/check-macos-artifacts.py')
     module = importlib.util.module_from_spec(spec)
@@ -63,5 +74,5 @@ if mac:
     print(f'Intel macOS bundle: {len(report)} native binaries passed Monterey deployment-target checks.')
 elif not win:
     subprocess.run([str(base/'python/bin/python3.12'),'-c',
-                    'import fastapi,pydantic,httpx,uvicorn,wsproto; print("Relocatable Linux backend imports passed")'],check=True)
+                    'import fastapi,pydantic,httpx,uvicorn,wsproto,websockets; print("Relocatable Linux backend imports passed")'],check=True)
 print(f'Backend bundle ready: {base}')

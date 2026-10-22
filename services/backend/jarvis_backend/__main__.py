@@ -6,7 +6,7 @@ from .app import create_app
 
 # A fresh token arrives through stdin, never command arguments or a disk file.
 config = json.loads(sys.stdin.readline(4096))
-app = create_app(config["token"])
+app = create_app(config["token"],config=config)
 sock = socket.socket()
 sock.bind(("127.0.0.1", 0))
 sock.listen(16)

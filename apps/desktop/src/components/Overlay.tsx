@@ -29,7 +29,7 @@ export function Overlay() {
   if (!snapshot)
     return (
       <div className="overlay-loading" role="status">
-        {error || 'JARVIS…'}
+        {error || '21…'}
       </div>
     );
   const t = copy[snapshot.settings.locale];

@@ -5,6 +5,7 @@ import type { VoiceSession } from './session';
 import { bridge } from '../services/bridge';
 import { Icon } from '../components/Icon';
 import './voice.css';
+import { ProviderSettings } from './ProviderSettings';
 
 interface Props {
   settings: Settings;
@@ -17,7 +18,7 @@ interface Props {
 const labels = {
   ro: {
     title: 'Spune „Jarvis”.',
-    subtitle: 'O voce locală. O prezență care răspunde.',
+    subtitle: 'Twenty One. O prezență care răspunde.',
     talk: 'Apasă și vorbește',
     wake: 'Activează „Jarvis”',
     stop: 'Oprește / mute',
@@ -28,11 +29,12 @@ const labels = {
     word: 'Cuvânt de activare',
     rate: 'Viteza vocii',
     heard: 'AI SPUS',
-    reply: 'JARVIS',
+    reply: '21',
     demo: 'Încearcă: „Cât este ceasul?”, „Deschide panoul de control”, „Salut”.',
     privacy:
       'Activarea este opțională. Microfonul rămâne local, fără înregistrări sau încărcări. Mute oprește capturarea.',
     hint: 'În modul de activare, spune „Jarvis”, așteaptă „Da, te ascult”, apoi vorbește. Pentru întrerupere, apasă butonul de mai sus.',
+    WAKE_DETECTED:'Activare detectată',
     OFF: 'Microfon oprit',
     STARTING: 'Se pregătește vocea locală…',
     ARMED: 'Microfon activ · aștept „Jarvis”',
@@ -44,7 +46,7 @@ const labels = {
   },
   en: {
     title: 'Say “Jarvis”.',
-    subtitle: 'A local voice. A presence that answers.',
+    subtitle: 'Twenty One. A presence that answers.',
     talk: 'Press to talk',
     wake: 'Enable “Jarvis”',
     stop: 'Stop / mute',
@@ -55,11 +57,12 @@ const labels = {
     word: 'Wake phrase',
     rate: 'Speech rate',
     heard: 'YOU SAID',
-    reply: 'JARVIS',
+    reply: '21',
     demo: 'Try: “What time is it?”, “Open the control room”, “Hello”.',
     privacy:
       'Activation is optional. Microphone audio stays local, without recordings or uploads. Mute stops capture.',
     hint: 'In wake mode, say “Jarvis”, wait for “Yes, I am listening”, then speak. Use the button above to interrupt.',
+    WAKE_DETECTED:'Wake detected',
     OFF: 'Microphone off',
     STARTING: 'Preparing local voice…',
     ARMED: 'Microphone active · waiting for “Jarvis”',
@@ -94,7 +97,7 @@ export function VoicePanel({ settings, status, voice, desktop, platform, run }: 
     <section className="panel voice-panel" data-testid="voice-panel">
       <div className="voice-heading">
         <div>
-          <span className="eyebrow">PHASE 02 / LOCAL VOICE</span>
+          <span className="eyebrow">21 / VOICE</span>
           <h2>{wakeText(t.title)}</h2>
           <p>{t.subtitle}</p>
         </div>
@@ -107,9 +110,10 @@ export function VoicePanel({ settings, status, voice, desktop, platform, run }: 
           {wakeText(t[status.phase])}
         </div>
       </div>
+      <ProviderSettings settings={settings} status={status} voice={voice} run={run}/>
       <p className="voice-privacy">
         <Icon name="shield" size={16} />
-        {t.privacy}
+        {status.cloudStreaming?(settings.locale==='ro'?'Microfonul transmite audio către Gemini cu acordul tău. Oprește pentru a încheia transmisia.':'Microphone audio is streaming to Gemini with your consent. Stop ends the stream.'):t.privacy}
       </p>
       {!status.modelsReady ? (
         <div className="voice-install">
@@ -218,7 +222,8 @@ export function VoicePanel({ settings, status, voice, desktop, platform, run }: 
                 onChange={(e) => update({ ttsProvider: e.target.value as Settings['ttsProvider'] })}
               >
                 <option value="piper">Piper · local</option>
-                <option value="system" disabled={platform !== 'darwin'}>
+                <option value="gemini">Gemini cloud · requires speech consent</option>
+        <option value="system" disabled={platform !== 'darwin'}>
                   macOS · local
                 </option>
               </select>
@@ -242,8 +247,10 @@ export function VoicePanel({ settings, status, voice, desktop, platform, run }: 
                 </select>
               </label>
             )}
-            <p className="voice-hint">STT: Whisper tiny · local</p>
+            <p className="voice-hint">STT: {status.recognitionProvider||'local-whisper'} · {status.cloudStreaming?'CLOUD AUDIO ACTIVE':'local microphone path'}</p>
           </div>
+          {status.partial&&<p aria-live="polite">{status.partial}</p>}
+          {status.message&&<p className="voice-hint">{status.message}</p>}
           <div className="voice-conversation">
             <div>
               <span>{t.heard}</span>

@@ -18,7 +18,8 @@ test('voice AI: capture → Whisper → actual Python/Ollama HTTP → Piper, app
     let body = '';
     for await (const chunk of req) body += String(chunk);
     const value = JSON.parse(body) as { messages: Array<{ content: string }> };
-    prompts.push(value.messages[1]!.content);
+    prompts.push(value.messages.at(-1)!.content);
+    if(value.messages.at(-1)?.content.includes('Electron 43')){res.end(JSON.stringify({message:{content:'Actual tool result received.'}}));return;}
     calls++;
     if (calls === 1)
       res.end(
@@ -67,6 +68,7 @@ test('voice AI: capture → Whisper → actual Python/Ollama HTTP → Piper, app
         locale: 'en',
         voiceLanguage: 'en',
         localModel: 'fixture-model',
+        localBackend:'ollama',
         quality: 'low',
       }),
     );

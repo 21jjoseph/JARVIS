@@ -15,6 +15,8 @@ if [[ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]]; then export NODE_USE_ENV_PROXY=1
 npm ci --no-audit
 npm run check:compat
 node scripts/setup-backend.mjs
+npm run engine:tools
+npm run engine:build
 npm run test:backend
 npm test
 npm run build

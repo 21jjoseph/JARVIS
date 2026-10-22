@@ -1,4 +1,4 @@
-# JARVIS engineering constraints
+# 21 engineering constraints (legacy JARVIS identifiers retained)
 
 - Use the existing isolated checkout. No worktrees unless requested.
 - Target macOS Monterey 12 / Intel x86_64. Electron must be **38–43**, never 44+.
@@ -20,7 +20,10 @@
   Validate privileged input and sender frames in main. Never expose arbitrary
   IPC, shell, filesystem or Node primitives to the renderer.
 - Microphone capture must be explicit, local and visible. Release tracks on all
-  stop/hide/close/error paths. No recording or uploads. No camera by default.
+  stop/hide/close/error paths. No disk recording. The user's Master Update V3
+  authorizes optional Gemini audio uploads only with explicit in-app speech
+  consent, cloud enabled and Hybrid/Cloud mode. Local mode never uploads.
+  No camera by default.
 - Preserve transparent roots, real signal-driven deformation, reduced motion,
   adaptive quality and hidden-window throttling.
 - Run `npm run check:compat`, `npm test`, `npm run build`, `npm run voice:check`
@@ -31,7 +34,8 @@
   npm run test:backend. Keep hash-locked wheels and the pinned relocatable
   runtime. Run scripts/bundle-backend.py --mac before Intel Mac packaging.
 - Keep provider URLs fixed, routes explicit and cloud consent per request. Never
-  upload audio, selected files, filenames, tool results or past messages. Never
+  upload audio without speech consent, or tool results/context without separate
+  explicit result/context sharing consent. Local-only requests never escalate. Never
   print keys. Store optional cloud keys using OS encryption, never plaintext.
 - Desktop tools require a consumed, owner-bound, expiring ticket and independent
   main-process validation. No generic shell or model-provided paths. Keep
@@ -39,3 +43,16 @@
 - Optional local AI uses audited Ollama CLI 0.5.7 (Intel target 11.3); the checked
   0.6.8 executable targets 13.0. Do not silently upgrade it. Protocol fixtures
   do not establish live model/provider or native macOS validation.
+
+- Official assistant identity: 21, spoken Twenty One in both languages. Preserve
+  legacy app ID, data paths and settings while supporting all three Twenty One
+  wake phrases and Casual/Professional modes. Never normalize unrelated numeric
+  occurrences of 21 in technical text.
+- Gemma 4 E2B QAT Q4_0 is preferred; E4B is optional. No large weight download
+  without previewed source/revision/size/SHA256/license and explicit approval.
+  Do not guess Hugging Face repository IDs or silently substitute a model.
+- Pin llama.cpp source; CPU only, context 4096, parallel 1, Metal/Accelerate OFF
+  for the initial Monterey build. Native Mac execution is unverified in Linux.
+- Gemini model preferences must be checked against actual key-specific model
+  discovery. Missing requested IDs are unavailable, not silently substituted.
+  Never claim fixture tests are real Gemini/Gemma inference or benchmark results.

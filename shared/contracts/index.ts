@@ -7,6 +7,9 @@ export const AVATAR_STATES = [
   'WARNING',
   'ERROR',
   'OFFLINE',
+  'WAKE_DETECTED',
+  'TRANSCRIBING',
+  'MUTED',
 ] as const;
 export type AvatarState = (typeof AVATAR_STATES)[number];
 export type Quality = 'auto' | 'low' | 'high';
@@ -28,10 +31,34 @@ export interface Settings {
   voiceLanguage: VoiceLanguage;
   wakeWord: string;
   speechRate: number;
-  ttsProvider: 'piper' | 'system';
+  ttsProvider: 'piper' | 'system' | 'gemini';
   systemVoice: string;
   localModel: string;
   cloudModel: string;
+  aiMode: 'local' | 'hybrid' | 'cloud';
+  localBackend: 'llama' | 'ollama';
+  localEndpoint: string;
+  modelPath: string;
+  modelDirectory: string;
+  inferenceThreads: number;
+  modelIdleSeconds: number;
+  cloudProvider: 'gemini' | 'openai';
+  cloudEnabled: boolean;
+  hybridCloudConsent: boolean;
+  shareContext: boolean;
+  personality: 'casual' | 'professional';
+  geminiModel: string;
+  geminiSttModel: string;
+  geminiTtsModel: string;
+  sttProvider: 'local' | 'gemini';
+  cloudAudioConsent: boolean;
+  voiceCloudTextConsent:boolean;
+  geminiVoice: string;
+  speechVolume: number;
+  technicalVocabulary: string[];
+  inputTokenPrice: number;
+  outputTokenPrice: number;
+  spendingWarning: number;
   position: { x: number; y: number } | null;
 }
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -47,12 +74,19 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   microphoneDeviceId: '',
   locale: 'ro',
   voiceLanguage: 'ro',
-  wakeWord: 'jarvis',
+  wakeWord: 'Twenty One',
   speechRate: 1,
   ttsProvider: 'piper',
   systemVoice: '',
   localModel: '',
   cloudModel: 'gpt-4.1-mini',
+  aiMode:'local',localBackend:'llama',localEndpoint:'http://127.0.0.1:8080',
+  modelPath:'',modelDirectory:'',inferenceThreads:2,modelIdleSeconds:600,
+  cloudProvider:'gemini',cloudEnabled:false,hybridCloudConsent:false,shareContext:false,
+  personality:'casual',geminiModel:'gemini-3.8-flash',geminiSttModel:'gemini-3.5-transcribe-live',
+  geminiTtsModel:'gemini-3.8-flash-lite-tts',sttProvider:'local',cloudAudioConsent:false,voiceCloudTextConsent:false,
+  geminiVoice:'Charon',speechVolume:1,inputTokenPrice:0,outputTokenPrice:0,spendingWarning:0,
+  technicalVocabulary:['21Robotics','21fadeaway','Twenty One','Elegoo','Centauri Carbon','CoppeliaSim','NEMA17','Arduino','ESP32','ROS 2','Creo','Bambu Studio','Cycloidal gearbox','Reductor cicloidal','Stepper motor','G-code','STL','STEP','MQTT'],
   position: null,
 });
 export interface Runtime {
@@ -135,13 +169,13 @@ export function validateSettingsPatch(input: unknown): Partial<Settings> {
         valid = value === 'ro' || value === 'en';
         break;
       case 'wakeWord':
-        valid = typeof value === 'string' && /^[a-zA-Z]{2,20}( [a-zA-Z]{2,20})?$/.test(value);
+        valid = typeof value === 'string' && /^[a-zA-Z]{2,20}( [a-zA-Z]{2,20}){0,2}$/.test(value);
         break;
       case 'speechRate':
         valid = inRange(value, 0.7, 1.4);
         break;
       case 'ttsProvider':
-        valid = value === 'piper' || value === 'system';
+        valid = value === 'piper' || value === 'system' || value === 'gemini';
         break;
       case 'localModel':
         valid =
@@ -154,6 +188,23 @@ export function validateSettingsPatch(input: unknown): Partial<Settings> {
       case 'systemVoice':
         valid = typeof value === 'string' && value.length <= 100 && !/[\r\n\0]/.test(value);
         break;
+      case 'aiMode': valid=value==='local'||value==='hybrid'||value==='cloud';break;
+      case 'localBackend': valid=value==='llama'||value==='ollama';break;
+      case 'localEndpoint':
+        if(typeof value==='string') {try {const url=new URL(value);valid=url.protocol==='http:' && ['127.0.0.1','localhost','[::1]'].includes(url.hostname) && !!url.port && !url.username && !url.password && url.pathname==='/' && !url.search && !url.hash;}catch {valid=false;}}
+        break;
+      case 'modelPath': case 'modelDirectory': valid=typeof value==='string'&&value.length<=1500&&!/[\r\n\0]/.test(value);break;
+      case 'inferenceThreads': valid=inRange(value,1,8)&&Number.isInteger(value);break;
+      case 'modelIdleSeconds': valid=inRange(value,60,3600)&&Number.isInteger(value);break;
+      case 'cloudProvider': valid=value==='gemini'||value==='openai';break;
+      case 'cloudEnabled': case 'hybridCloudConsent': case 'shareContext': case 'cloudAudioConsent': case 'voiceCloudTextConsent': valid=typeof value==='boolean';break;
+      case 'personality': valid=value==='casual'||value==='professional';break;
+      case 'geminiModel': case 'geminiSttModel': case 'geminiTtsModel': case 'geminiVoice':
+        valid=typeof value==='string'&&/^[a-zA-Z0-9_.:-]{1,150}$/.test(value);break;
+      case 'sttProvider': valid=value==='local'||value==='gemini';break;
+      case 'speechVolume': valid=inRange(value,0,1);break;
+      case 'inputTokenPrice': case 'outputTokenPrice': case 'spendingWarning': valid=inRange(value,0,1000);break;
+      case 'technicalVocabulary': valid=Array.isArray(value)&&value.length<=100&&value.every(v=>typeof v==='string'&&v.length>0&&v.length<=64&&!/[\r\n\0]/.test(v));break;
       case 'position':
         valid =
           value === null ||

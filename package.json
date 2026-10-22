@@ -1,8 +1,8 @@
 {
   "name": "jarvis-desktop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "21Robotics JARVIS — a local, audio-reactive ferrofluid desktop companion",
+  "description": "21 — Personal AI by 21Robotics",
   "author": "21Robotics",
   "license": "UNLICENSED",
   "type": "module",
@@ -28,7 +28,10 @@
     "dist:win": "npm run build && npm run backend:bundle -- --win && electron-builder --win",
     "backend:setup": "node scripts/setup-backend.mjs",
     "test:backend": "node scripts/test-backend.mjs",
-    "backend:bundle": "node scripts/bundle-backend.mjs"
+    "backend:bundle": "node scripts/bundle-backend.mjs",
+    "engine:tools": "node scripts/backend-task.mjs scripts/install-engine-tools.py",
+    "engine:build": "node scripts/backend-task.mjs scripts/build-local-engine.py",
+    "engine:benchmark": "node scripts/backend-task.mjs scripts/benchmark-local-ai.py"
   },
   "dependencies": {
     "react": "19.3.1",
@@ -52,7 +55,7 @@
   },
   "build": {
     "appId": "ro.21robotics.jarvis",
-    "productName": "JARVIS",
+    "productName": "21",
     "directories": {
       "output": "release"
     },
@@ -77,7 +80,7 @@
         }
       ],
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "JARVIS processes microphone audio on this device for wake-word detection, speech transcription, and avatar animation after you enable listening. Microphone audio is never saved or uploaded.",
+        "NSMicrophoneUsageDescription": "21 processes microphone audio locally for wake-word detection, speech recognition and avatar animation. Gemini speech receives audio only after you enable cloud speech and explicitly consent. No microphone recording is saved to disk.",
         "NSCameraUsageDescription": "Camera features are not available in this version."
       }
     },

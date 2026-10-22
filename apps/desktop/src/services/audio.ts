@@ -91,7 +91,7 @@ export class AudioSession {
     try {
       this.claimed = await this.bridge.claimAudio(source);
       if (!this.claimed)
-        throw new Error('Audio is active in another JARVIS window. Stop it there first.');
+        throw new Error('Audio is active in another 21 window. Stop it there first.');
       const context = new AudioContext();
       this.context = context;
       await context.resume();

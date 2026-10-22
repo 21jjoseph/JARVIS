@@ -23,4 +23,4 @@ child.on('error', (error) => {
 });
 process.on('SIGINT', () => void close());
 process.on('SIGTERM', () => void close());
-console.log('JARVIS development renderer ready. Restart npm run dev after Electron changes.');
+console.log('21 development renderer ready. Restart npm run dev after Electron changes.');

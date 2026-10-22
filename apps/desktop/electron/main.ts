@@ -12,6 +12,7 @@ import {
 } from 'electron';
 import type { IpcMainInvokeEvent, IpcMainEvent, WebContents } from 'electron';
 import { join } from 'node:path';
+import { existsSync,statSync } from 'node:fs';
 import {
   isState,
   validateDelta,
@@ -33,6 +34,12 @@ const devUrl = safeDevUrl(process.env.JARVIS_DEV_URL);
 const indexPath = join(__dirname, '../dist/index.html');
 // Tests use an isolated user-data directory; normal runs use the OS application data path.
 if (process.env.JARVIS_USER_DATA_DIR) app.setPath('userData', process.env.JARVIS_USER_DATA_DIR);
+else {
+  const roots=['jarvis-desktop','JARVIS','21'].map(name=>join(app.getPath('appData'),name));
+  const existing=roots.filter(root=>existsSync(join(root,'settings.json'))).sort((a,b)=>statSync(join(b,'settings.json')).mtimeMs-statSync(join(a,'settings.json')).mtimeMs);
+  app.setPath('userData',existing[0]||roots[0]!);
+}
+app.setName('21');
 let overlay: BrowserWindow | null = null;
 let dashboard: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -44,6 +51,7 @@ let quitting = false;
 let finalQuit = false;
 let lastAmplitudeAt = 0;
 let voice: VoiceController | undefined;
+let privacyUpdating=false;
 let backend: Backend | undefined;
 let ai: AiController | undefined;
 const capabilities: Capabilities = {
@@ -147,7 +155,7 @@ function load(win: BrowserWindow, view: 'overlay' | 'dashboard') {
   const result = devUrl
     ? win.loadURL(`${devUrl}/#${view}`)
     : win.loadFile(indexPath, { hash: view });
-  void result.catch(() => fail('The interface could not be loaded. Rebuild JARVIS and restart.'));
+  void result.catch(() => fail('The interface could not be loaded. Rebuild 21 and restart.'));
 }
 const webPreferences = () => ({
   preload: join(__dirname, 'preload.cjs'),
@@ -172,7 +180,7 @@ function createOverlay() {
     ...position,
     width: settings.size,
     height: settings.size,
-    title: 'JARVIS · Avatar',
+    title: '21 · Avatar',
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
@@ -215,7 +223,7 @@ function openDashboard() {
     height: 860,
     minWidth: 880,
     minHeight: 660,
-    title: 'JARVIS · Control room',
+    title: '21 · Control room',
     backgroundColor: '#080d12',
     show: false,
     autoHideMenuBar: true,
@@ -256,6 +264,8 @@ function registerIpc() {
   handle('jarvis:snapshot', () => snapshot());
   handle('jarvis:settings', async (_event, input) => {
     const patch = validateSettingsPatch(input);
+    const revokes=patch.cloudEnabled===false||patch.aiMode==='local'||patch.cloudAudioConsent===false||patch.hybridCloudConsent===false||patch.voiceCloudTextConsent===false;
+    if(revokes)voice?.stop();
     if (
       voice?.active &&
       [
@@ -264,12 +274,13 @@ function registerIpc() {
         'speechRate',
         'microphoneDeviceId',
         'ttsProvider',
-        'systemVoice',
+        'systemVoice','sttProvider','cloudAudioConsent','geminiVoice','geminiSttModel','geminiTtsModel','speechVolume',
       ].some((key) => key in patch)
     )
       throw new Error('Stop the voice session before changing voice settings.');
-    if (patch.position !== undefined || patch.version !== undefined)
-      throw new Error('Position and version are managed by the application.');
+    if (patch.position !== undefined || patch.version !== undefined || patch.modelPath !== undefined || patch.modelDirectory !== undefined)
+      throw new Error('Position, version and model paths are managed by the application.');
+
     if (patch.launchAtLogin !== undefined) {
       if (!capabilities.loginItem || !app.isPackaged)
         throw new Error('Launch at login requires a packaged macOS or Windows application.');
@@ -277,7 +288,8 @@ function registerIpc() {
       if (app.getLoginItemSettings().openAtLogin !== patch.launchAtLogin)
         throw new Error('The operating system did not accept the login item.');
     }
-    await store.update(patch);
+    if(revokes){privacyUpdating=true;voice?.stop();}
+    try{await store.update(patch);if(revokes)await ai?.cancel();}finally{privacyUpdating=false;}
     if (patch.size !== undefined && overlay) {
       const position = clampPosition(currentPosition() ?? { x: 0, y: 0 }, patch.size, bounds());
       overlay.setBounds({ ...position, width: patch.size, height: patch.size });
@@ -320,7 +332,7 @@ function registerIpc() {
     if (audioOwner !== null || ai?.active) return false;
     const owner = BrowserWindow.fromWebContents(event.sender);
     if (!owner?.isVisible() || owner.isMinimized())
-      throw new Error('Show the JARVIS window before activating audio.');
+      throw new Error('Show the 21 window before activating audio.');
     runtime = transition(runtime, { type: 'AUDIO_START', source });
     audioOwner = event.sender.id;
     broadcast();
@@ -332,6 +344,7 @@ function registerIpc() {
   handle('ai:status', () => ai!.status());
   handle('ai:last', (event) => ai!.lastReply(event.sender.id));
   handle('ai:ask', (event, input) => {
+    if(privacyUpdating)throw new Error('Privacy settings are being updated.');
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win?.isVisible() || win.isMinimized())
       throw new Error('Show the window before asking AI.');
@@ -339,13 +352,21 @@ function registerIpc() {
     return ai!.ask(event.sender.id, input);
   });
   handle('ai:cancel', (event) => ai!.cancel(event.sender.id));
-  handle('ai:resolve', (event, id, approve) => {
+  handle('ai:resolve', (event, id, approve,shareResult) => {
+    if(privacyUpdating)throw new Error('Privacy settings are being updated.');
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win?.isVisible() || win.isMinimized())
       throw new Error('Show the window before approving an action.');
-    return ai!.resolve(event.sender.id, id, approve);
+    return ai!.resolve(event.sender.id, id, approve,shareResult);
   });
-  handle('ai:key', (_event, key) => ai!.setKey(key));
+  handle('ai:key', (_event, key,provider) => {if(key!=='')throw new Error('Use the native secure key dialog.');return ai!.setKey(key,provider);});
+  handle('ai:configure-key',(_event,provider)=>ai!.configureKey(provider));
+  handle('ai:connection',(_event,provider)=>ai!.connection(provider));
+  handle('ai:local',(event,action,options)=>{
+    if(action!=='status'&&action!=='discover'&&action!=='preview'){const win=BrowserWindow.fromWebContents(event.sender);if(!win?.isVisible()||win.isMinimized())throw new Error('Show the window before managing local models.');}
+    if(action==='stop'&&voice?.active)voice.stop();
+    return ai!.local(action,options);
+  });
   handle('voice:status', () => voice!.snapshot);
   handle('voice:system-voices', () => systemVoices());
   handle('voice:install', () =>
@@ -353,12 +374,13 @@ function registerIpc() {
       net.fetch(String(input), init)) as typeof fetch),
   );
   handle('voice:start', (event, mode) => {
+    if(privacyUpdating)throw new Error('Privacy settings are being updated.');
     if (ai?.active) throw new Error('Stop the AI request before starting voice.');
-    if (mode !== 'push' && mode !== 'wake') throw new Error('Invalid voice mode.');
+    if (mode !== 'push' && mode !== 'wake' && mode!=='calibration' && mode!=='calibration-cloud') throw new Error('Invalid voice mode.');
     return voice!.start(event.sender.id, mode);
   });
   handle('voice:feed', (event, samples) => voice!.feed(event.sender.id, validatePcm(samples)));
-  handle('voice:stop', () => voice!.stop());
+  handle('voice:stop', () => {voice!.stop();runtime=transition(runtime,{type:'AI_PHASE',state:'MUTED'});broadcast();});
   handle('voice:played', (event, id) => {
     if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0)
       throw new Error('Invalid playback identifier.');
@@ -398,7 +420,7 @@ function createTray() {
   const image = nativeImage.createFromPath(join(__dirname, 'tray.png'));
   image.setTemplateImage(true);
   tray = new Tray(image);
-  tray.setToolTip('JARVIS · 21Robotics');
+  tray.setToolTip('21 · 21Robotics');
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: 'Open control room / Panou', click: openDashboard },
@@ -406,7 +428,7 @@ function createTray() {
       { label: 'Hide avatar / Ascunde avatarul', click: () => overlay?.hide() },
       { label: 'Stop audio / Oprește audio', click: releaseAudio },
       { type: 'separator' },
-      { label: 'Quit JARVIS / Închide', click: () => app.quit() },
+      { label: 'Quit 21 / Închide', click: () => app.quit() },
     ]),
   );
   tray.on('click', openDashboard);
@@ -449,6 +471,7 @@ if (!app.requestSingleInstanceLock()) {
       backend = new Backend(
         join(__dirname, '..'),
         app.isPackaged ? process.resourcesPath : undefined,
+        app.getPath('userData'),
       );
       await backend.start();
       ai = new AiController({
@@ -461,6 +484,8 @@ if (!app.requestSingleInstanceLock()) {
             ?.webContents.send('ai:reply', reply);
         },
         dashboard: openDashboard,
+        saveSettings:async(patch)=>{await store.update(patch);broadcast();},
+        delta:(owner,event)=>{allWindows().find(w=>w.webContents.id===owner)?.webContents.send('ai:delta',event);},
         phase: (state) => {
           runtime = transition(runtime, {
             type: runtime.source === 'none' ? 'AI_PHASE' : 'VOICE_PHASE',
@@ -484,7 +509,7 @@ if (!app.requestSingleInstanceLock()) {
           const window = allWindows().find((win) => win.webContents.id === owner);
           if (audioOwner !== null) throw new Error('Stop the current audio session first.');
           if (!window?.isVisible() || window.isMinimized())
-            throw new Error('Show the JARVIS window before starting voice.');
+            throw new Error('Show the 21 window before starting voice.');
           audioOwner = owner;
           runtime = transition(runtime, { type: 'AUDIO_START', source: 'voice' });
           broadcast();
@@ -503,9 +528,9 @@ if (!app.requestSingleInstanceLock()) {
             runtime = transition(runtime, {
               type: 'VOICE_PHASE',
               state:
-                phase === 'SPEAKING'
+                phase === 'WAKE_DETECTED' ? 'WAKE_DETECTED' : phase === 'TRANSCRIBING' ? 'TRANSCRIBING' : phase === 'SPEAKING'
                   ? 'SPEAKING'
-                  : phase === 'TRANSCRIBING' || phase === 'SYNTHESIZING' || phase === 'STARTING'
+                  : phase === 'SYNTHESIZING' || phase === 'STARTING'
                     ? 'THINKING'
                     : phase === 'OFF'
                       ? 'IDLE'
@@ -519,10 +544,12 @@ if (!app.requestSingleInstanceLock()) {
             ?.webContents.send('voice:audio', audio);
         },
         openDashboard,
+        cloudCapture:(partial,signal)=>ai!.cloudCapture(partial,signal),
+        cloudSpeech:(text,signal)=>ai!.cloudSpeech(text,signal),
         answer: async (owner, text, signal) => {
           const response = await ai!.ask(
             owner,
-            { text, route: 'local', cloudConsent: false },
+            { text, route:store.value.voiceCloudTextConsent?'auto':'local', cloudConsent:store.value.voiceCloudTextConsent },
             signal,
             true,
           );
@@ -553,7 +580,7 @@ if (!app.requestSingleInstanceLock()) {
     })
     .catch((error) => {
       console.error(
-        'JARVIS startup failed:',
+        '21 startup failed:',
         error instanceof Error ? error.message : 'Unknown error',
       );
       app.exit(1);
@@ -578,7 +605,7 @@ app.on('before-quit', (event) => {
         await store.flush();
       }
     } catch {
-      console.error('JARVIS could not persist the final window position.');
+      console.error('21 could not persist the final window position.');
     }
     globalShortcut.unregisterAll();
     tray?.destroy();

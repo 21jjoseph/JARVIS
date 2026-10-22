@@ -1,5 +1,6 @@
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname,join } from 'node:path';
 import { DEFAULT_SETTINGS, validateSettingsPatch, type Settings } from '../../../shared/contracts';
 
 export class SettingsStore {
@@ -12,7 +13,10 @@ export class SettingsStore {
   async load(): Promise<string | null> {
     try {
       const raw: unknown = JSON.parse(await readFile(this.path, 'utf8'));
-      this.current = { ...DEFAULT_SETTINGS, ...validateSettingsPatch(raw) };
+      const checked=validateSettingsPatch(raw);
+      if (checked.localModel && checked.localBackend === undefined) checked.localBackend='ollama';
+      if (checked.cloudProvider === undefined && existsSync(join(dirname(this.path),'cloud-key.bin'))) checked.cloudProvider='openai';
+      this.current = { ...DEFAULT_SETTINGS, ...checked };
       return null;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;

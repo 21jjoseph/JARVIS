@@ -1,8 +1,9 @@
 export type VoiceLanguage = 'ro' | 'en';
-export type VoiceMode = 'push' | 'wake';
+export type VoiceMode = 'push' | 'wake' | 'calibration' | 'calibration-cloud';
 export type VoicePhase =
   | 'OFF'
   | 'STARTING'
+  | 'WAKE_DETECTED'
   | 'ARMED'
   | 'LISTENING'
   | 'TRANSCRIBING'
@@ -19,6 +20,12 @@ export interface VoiceStatus {
   heard: string;
   reply: string;
   error: string | null;
+  cloudStreaming?:boolean;
+  heardRaw?:string;
+  partial?:string;
+  recognitionProvider?:'local-whisper'|'gemini';
+  outputProvider?:'piper'|'system'|'gemini';
+  metrics?:{wake_processing_ms?:number;stt_ms?:number;tts_ready_ms?:number;turn_ms?:number};
 }
 export const INITIAL_VOICE: VoiceStatus = {
   phase: 'OFF',
@@ -35,6 +42,7 @@ export interface VoiceAudio {
   id: number;
   samples: Float32Array;
   sampleRate: number;
+  playbackRate?:number;
 }
 export interface VoiceBridge {
   systemVoices(): Promise<Array<{ name: string; language: string }>>;

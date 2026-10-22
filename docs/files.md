@@ -1,6 +1,6 @@
 # Project files
 
-Source, configuration, documentation and tests for JARVIS Phases 1–2. Models, dependencies and generated outputs are ignored.
+Historical Phases 1–2 manifest. See [the exact V3 created/modified file list](v3-files.md) for the current update. Models, dependencies and generated outputs are ignored.
 
 - [.env.example](../.env.example)
 - [.gitignore](../.gitignore)

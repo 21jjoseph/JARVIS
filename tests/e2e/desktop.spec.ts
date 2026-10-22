@@ -27,8 +27,9 @@ test('production desktop: rendered avatar, IPC boundaries, audio, dashboard and 
   let app: ElectronApplication | undefined;
   const launch = () =>
     electron.launch({
+      executablePath:process.env.JARVIS_TEST_EXECUTABLE,
       args: [
-        '.',
+        ...(process.env.JARVIS_TEST_EXECUTABLE?[]:['.']),
         ...(process.env.JARVIS_TEST_NO_SANDBOX === '1' ? ['--no-sandbox'] : []),
         '--use-gl=angle',
         '--use-angle=swiftshader',

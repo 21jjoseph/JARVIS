@@ -1,0 +1,14 @@
+{
+  "revision": "d77256999f211f8c0a5b12d13564f48d685b59e7",
+  "source_url": "https://codeload.github.com/ggml-org/llama.cpp/tar.gz/d77256999f211f8c0a5b12d13564f48d685b59e7",
+  "sha256": "50c25dadaf35c95d82c5c843c26444452482fc67d98ca70fcc71ea15215dc74c",
+  "context": 4096,
+  "parallel": 1,
+  "gpu_layers": 0,
+  "maximum_threads": 8,
+  "idle_seconds": 600,
+  "preferred_architecture": "gemma4",
+  "model_discovery": "https://huggingface.co/api/models?author=google&search=gemma-4&limit=100",
+  "preferred_quantization": "Q4_0",
+  "preferred_variant": "E2B"
+}

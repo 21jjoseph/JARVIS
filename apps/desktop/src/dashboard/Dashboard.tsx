@@ -51,7 +51,7 @@ export function Dashboard() {
   if (!snapshot)
     return (
       <div className="loading" role="status">
-        {error || 'INITIALIZING JARVIS…'}
+        {error || 'INITIALIZING 21…'}
       </div>
     );
   const { settings, runtime, capabilities } = snapshot;
@@ -200,13 +200,13 @@ export function Dashboard() {
           </div>
           <div>
             <strong>
-              JARVIS<span>®</span>
+              21<span>®</span>
             </strong>
             <small>BY 21ROBOTICS</small>
           </div>
         </div>
         <div className="workspace-label">
-          PERSONAL COMPANION <span>V.03</span>
+          PERSONAL COMPANION <span>V.3</span>
         </div>
         <nav aria-label="Main navigation">
           {NAV.map((item) => (
@@ -238,8 +238,8 @@ export function Dashboard() {
             <span>{t.ready}</span>
           </div>
           <div className="system-version">
-            <span>JARVIS CORE</span>
-            <span>0.3.0</span>
+            <span>21 CORE</span>
+            <span>0.4.0</span>
           </div>
           <button
             className="quit-button"
@@ -417,9 +417,9 @@ export function Dashboard() {
           )}
           <footer className="page-footer">
             <span>
-              21ROBOTICS <span className="footer-divider">/</span> PROJECT J.A.R.V.I.S.
+              21ROBOTICS <span className="footer-divider">/</span> 21 · PERSONAL AI
             </span>
-            <span>{capabilities.platform.toUpperCase()} · PHASE 03</span>
+            <span>{capabilities.platform.toUpperCase()} · UPDATE V3</span>
           </footer>
           {tab === 'settings' && (
             <p className="roadmap">

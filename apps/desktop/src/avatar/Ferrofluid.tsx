@@ -26,7 +26,7 @@ export function Ferrofluid({ runtime, settings, large = false }: Props) {
         powerPreference: 'low-power',
       });
     } catch {
-      setError('WebGL indisponibil. Activează accelerarea grafică și repornește JARVIS.');
+      setError('WebGL indisponibil. Activează accelerarea grafică și repornește 21.');
       return;
     }
     renderer.setClearColor(0x000000, 0);
@@ -78,7 +78,7 @@ export function Ferrofluid({ runtime, settings, large = false }: Props) {
     resize();
     const onContextLost = (event: Event) => {
       event.preventDefault();
-      setError('Contextul grafic s-a oprit. Repornește JARVIS.');
+      setError('Contextul grafic s-a oprit. Repornește 21.');
     };
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     let frame = 0,

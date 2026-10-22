@@ -49,11 +49,12 @@ export async function executeTool(tool: ToolCall): Promise<string> {
       const id = tool.arguments.app!;
       if (id === 'file_manager') return openPath(app.getPath('home'));
       if (process.platform === 'darwin') {
-        await exec('/usr/bin/open', ['-a', id === 'calculator' ? 'Calculator' : 'TextEdit'], {
+        await exec('/usr/bin/open', ['-a', id === 'coppeliasim'?'CoppeliaSim':id === 'calculator' ? 'Calculator' : 'TextEdit'], {
           timeout: 5000,
           maxBuffer: 4096,
         });
       } else if (process.platform === 'win32') {
+        if(id==='coppeliasim')throw new Error('Launch CoppeliaSim manually on Windows; its installation path is not configured.');
         await exec(id === 'calculator' ? 'calc.exe' : 'notepad.exe', [], {
           timeout: 5000,
           maxBuffer: 4096,
@@ -66,7 +67,7 @@ export async function executeTool(tool: ToolCall): Promise<string> {
     }
     case 'read_text_file': {
       const selected = await dialog.showOpenDialog({
-        title: 'JARVIS: choose a text file to display locally',
+        title: '21: choose a text file to display locally',
         properties: ['openFile'],
         filters: [
           {
@@ -81,7 +82,7 @@ export async function executeTool(tool: ToolCall): Promise<string> {
     }
     case 'find_files': {
       const selected = await dialog.showOpenDialog({
-        title: 'JARVIS: choose a folder to search locally',
+        title: '21: choose a folder to search locally',
         properties: ['openDirectory'],
       });
       if (selected.canceled || !selected.filePaths[0]) return 'Folder selection cancelled.';

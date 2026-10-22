@@ -15,7 +15,7 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
     let body = '';
     for await (const chunk of req) body += String(chunk);
     const input = JSON.parse(body) as { messages: Array<{ content: string }> };
-    const prompt = input.messages[1]!.content;
+    const prompt = input.messages.at(-1)!.content;
     requests.push(prompt);
     if (prompt === 'Slow response') {
       setTimeout(() => res.end(JSON.stringify({ message: { content: 'Stale response' } })), 2500);
@@ -65,6 +65,7 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
         locale: 'en',
         voiceLanguage: 'en',
         localModel: 'fixture-model',
+        localBackend:'ollama',
         quality: 'low',
       }),
     );
@@ -74,10 +75,11 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
       .poll(() => page.evaluate(async () => (await window.jarvis!.ai.status()).ready))
       .toBe(true);
     await expect(panel.getByLabel('Local Ollama model')).toHaveValue('fixture-model');
-    await panel.getByLabel('Message JARVIS').fill('Explain an electric motor');
+    await panel.getByLabel('Message Twenty One').fill('Explain an electric motor');
     await panel.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(panel).toContainText('Fixture answer about electric motors.');
     expect(requests).toEqual(['Explain an electric motor']);
+    await page.evaluate(()=>window.jarvis!.updateSettings({cloudEnabled:true,aiMode:'cloud'}));
     await panel.getByLabel('Message destination').selectOption('cloud');
     await expect(panel.getByRole('button', { name: 'Send', exact: true })).toBeDisabled();
     await expect(
@@ -87,7 +89,7 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
     ).rejects.toThrow('Confirm cloud');
     expect(requests).toHaveLength(1);
     await panel.getByLabel('Message destination').selectOption('local');
-    await panel.getByLabel('Message JARVIS').fill('Show system info');
+    await panel.getByLabel('Message Twenty One').fill('Show system info');
     await panel.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(panel.getByRole('region', { name: 'Action approval' })).toBeVisible();
     await expect
@@ -113,11 +115,11 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
     expect(audit).toContain('denied');
     expect(audit).toContain('completed');
     expect(audit).not.toContain('Explain an electric motor');
-    await panel.getByLabel('Message JARVIS').fill('Unsafe action');
+    await panel.getByLabel('Message Twenty One').fill('Unsafe action');
     await panel.getByRole('button', { name: 'Send', exact: true }).click();
-    await expect(panel).toContainText('unsupported action');
+    await expect(panel).toContainText('Unsupported tool');
     await expect(panel.getByRole('region', { name: 'Action approval' })).toHaveCount(0);
-    await panel.getByLabel('Message JARVIS').fill('Slow response');
+    await panel.getByLabel('Message Twenty One').fill('Slow response');
     await panel.getByRole('button', { name: 'Send', exact: true }).click();
     await expect.poll(() => requests.includes('Slow response')).toBe(true);
     await expect
@@ -127,7 +129,7 @@ test('AI: actual Python process, provider HTTP, chat, consent, approval and canc
     await expect(panel).toContainText('cancelled');
     await page.waitForTimeout(2800);
     await expect(panel).not.toContainText('Stale response');
-    await panel.getByLabel('Message JARVIS').fill('What time is it?');
+    await panel.getByLabel('Message Twenty One').fill('What time is it?');
     await panel.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(panel).toContainText('The time is');
     await page.screenshot({ path: 'test-results/ai-panel.png', fullPage: true });

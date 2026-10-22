@@ -47,6 +47,17 @@ describe('atomic settings persistence', () => {
     expect(await readFile(join(dir, backup), 'utf8')).toBe('{ invalid JSON');
     expect(store.value.size).toBe(320);
   });
+  it('migrates existing Ollama/OpenAI settings and preserves wake configuration', async()=>{
+    const {path,dir}=await fixture();
+    await writeFile(path,JSON.stringify({version:1,localModel:'qwen2.5:3b',wakeWord:'jarvis',locale:'en'}));
+    await writeFile(join(dir,'cloud-key.bin'),'encrypted legacy fixture');
+    const store=new SettingsStore(path);expect(await store.load()).toBeNull();
+    expect(store.value.localBackend).toBe('ollama');expect(store.value.cloudProvider).toBe('openai');
+    expect(store.value.wakeWord).toBe('jarvis');expect(store.value.aiMode).toBe('local');
+    await store.update({personality:'professional',technicalVocabulary:['CoppeliaSim'],cloudEnabled:true});
+    const restored=new SettingsStore(path);await restored.load();
+    expect(restored.value.personality).toBe('professional');expect(restored.value.technicalVocabulary).toEqual(['CoppeliaSim']);
+  });
   it('does not claim persistence when writing fails', async () => {
     const { path } = await fixture();
     await writeFile(path, 'not a directory');

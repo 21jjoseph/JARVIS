@@ -14,6 +14,7 @@ export class VoiceSession {
   private busy = false;
   private packets: Float32Array[] = [];
   private status: VoiceStatus | null = null;
+  private volume=1;
   constructor(
     private bridge: DesktopBridge,
     private changed: (active: boolean) => void,
@@ -28,6 +29,7 @@ export class VoiceSession {
   async start(mode: VoiceMode, settings: Settings) {
     if (this.ownsSession) await this.stop();
     const generation = ++this.generation;
+    this.volume=settings.speechVolume;
     try {
       await this.bridge.voice.start(mode);
       this.ownsSession = true;
@@ -119,9 +121,11 @@ export class VoiceSession {
       const source = context.createBufferSource();
       this.output = source;
       source.buffer = buffer;
+      source.playbackRate.value=audio.playbackRate||1;
       const analyser = context.createAnalyser();
       analyser.fftSize = 512;
-      source.connect(analyser);
+      const gain=context.createGain();gain.gain.value=this.volume;
+      source.connect(gain);gain.connect(analyser);
       analyser.connect(context.destination);
       clearInterval(this.meter);
       const samples = new Float32Array(analyser.fftSize);

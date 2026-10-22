@@ -46,6 +46,9 @@ async function main() {
       ['en', 'Jarvis. What time is it?', 'time', 'en'],
       ['ro', 'Cât este ceasul?', 'ceas', 'ro'],
       ['en', 'Explain an electric motor.', 'motor', 'ai'],
+      ['en', 'Twenty One. What time is it?', 'time', 'twenty-one'],
+      ['en', 'Yo Twenty One. What time is it?', 'time', 'yo-twenty-one'],
+      ['en', 'Hey Twenty One. What time is it?', 'time', 'hey-twenty-one'],
     ] as const) {
       const audio = await worker.call<{ samples: Float32Array; sampleRate: number }>('synthesize', {
         language,
@@ -70,15 +73,15 @@ async function main() {
       const padded = new Float32Array(samples.length + 16000 * 3);
       padded.set(samples);
       await writeFile(`.cache/voice-fixtures/${fixture}.wav`, wave(padded));
-      if (fixture === 'en') {
-        await worker.call('wake', { word: 'jarvis' });
+      if (fixture === 'en'||fixture.includes('twenty-one')) {
+        await worker.call('wake', { word: fixture==='en'?'jarvis':'Twenty One' });
         let detected = false;
         for (let at = 0; at < padded.length; at += 2048)
           if (await worker.call<boolean>('keyword', { samples: padded.slice(at, at + 2048) }))
             detected = true;
-        assert(detected, 'The local Jarvis wake-word detector did not trigger.');
+        assert(detected, `The local wake-word detector did not trigger for ${text}`);
         passed++;
-        console.log('Actual local keyword detection: Jarvis triggered.');
+        console.log(`Actual local keyword detection: ${fixture} triggered.`);
       }
     }
     console.log(

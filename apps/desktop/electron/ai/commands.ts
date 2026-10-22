@@ -1,12 +1,8 @@
 import type { ToolCall } from '../../../../shared/contracts/ai';
+import { commandText } from '../../../../shared/contracts/identity';
 /** Small explicit offline commands; model text is never parsed as shell code. */
 export function desktopCommand(text: string): ToolCall | null {
-  const normalized = text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[?.!]+$/, '')
-    .trim();
+  const normalized = commandText(text);
   if (
     /^(show system info(?:rmation)?|system info|arata informatii despre sistem)$/.test(normalized)
   )
@@ -14,11 +10,11 @@ export function desktopCommand(text: string): ToolCall | null {
   if (/^(read (?:a |one )?(?:text )?file|citeste un fisier)$/.test(normalized))
     return { name: 'read_text_file', arguments: {} };
   if (
-    /^(open|deschide) (?:the )?(calculator|text editor|textedit|file manager|finder)$/.test(
+    /^(open|deschide) (?:the )?(calculator|text editor|textedit|file manager|finder|coppeliasim)$/.test(
       normalized,
     )
   ) {
-    const app = normalized.includes('calculator')
+    const app = normalized.includes('coppeliasim')?'coppeliasim':normalized.includes('calculator')
       ? 'calculator'
       : /finder|file manager/.test(normalized)
         ? 'file_manager'

@@ -1,3 +1,7 @@
+See [V3 hybrid AI setup and verification](../../docs/v3-report.md) for current
+Gemma/Gemini routing, speech, privacy and authenticated API details. The original
+v1 API remains for regression compatibility.
+
 # JARVIS local AI service
 
 Python 3.12 + FastAPI/Pydantic, launched and authenticated by Electron. See

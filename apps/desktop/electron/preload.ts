@@ -4,12 +4,19 @@ import type { VoiceStatus, VoiceAudio } from '../../../shared/contracts/voice';
 
 const bridge: DesktopBridge = {
   ai: {
+    configureKey:(provider)=>ipcRenderer.invoke('ai:configure-key',provider),
     status: () => ipcRenderer.invoke('ai:status'),
+    connection:(provider)=>ipcRenderer.invoke('ai:connection',provider),
+    local:(action,options)=>ipcRenderer.invoke('ai:local',action,options),
+    onDelta:(callback)=>{
+      const handler=(_event:unknown,event:import('../../../shared/contracts/ai').AiDelta)=>callback(event);
+      ipcRenderer.on('ai:delta',handler);return ()=>{ipcRenderer.removeListener('ai:delta',handler);};
+    },
     lastReply: () => ipcRenderer.invoke('ai:last'),
     ask: (input) => ipcRenderer.invoke('ai:ask', input),
     cancel: () => ipcRenderer.invoke('ai:cancel'),
-    resolve: (id, approve) => ipcRenderer.invoke('ai:resolve', id, approve),
-    setKey: (key) => ipcRenderer.invoke('ai:key', key),
+    resolve: (id, approve,shareResult) => ipcRenderer.invoke('ai:resolve', id, approve,shareResult),
+    setKey: (key,provider) => ipcRenderer.invoke('ai:key', key,provider),
     onReply: (callback) => {
       const handler = (_event: unknown, reply: import('../../../shared/contracts/ai').AiReply) =>
         callback(reply);

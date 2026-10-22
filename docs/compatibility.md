@@ -102,3 +102,36 @@ updates. Installing an arbitrary newer Electron is not a compatibility fix.
 - [Electron 43.8.3 release](https://github.com/electron/electron/releases/tag/v43.8.3)
 - [Python 3.12 on macOS](https://docs.python.org/3.12/using/mac.html)
 - [CPython 3.12 universal2 installer deployment target](https://github.com/python/cpython/blob/v3.12.10/Mac/BuildScript/build-installer.py)
+
+## V3 hybrid AI additions
+
+All existing npm/runtime pins remain unchanged. The only new production Python
+package is **websockets 15.0.1**, hash-locked for the Gemini Live relay. The actual
+CPython 3.12 Intel wheel's speedups binary targets **macOS 10.13**. Rebuilding the
+Mac Python bundle audited **13 native binaries**, maximum deployment **10.15**.
+
+Optional build-only **CMake 3.31.6** and **Ninja 1.11.1.4** are separately
+hash-locked. Their actual universal Mac wheels contain **five Intel binaries**;
+all passed deployment checks, maximum **10.10**. These tools are not runtime
+requirements. `engine:tools` audits Mac binaries before installing the wheels.
+
+llama.cpp is pinned to `d77256999f211f8c0a5b12d13564f48d685b59e7`, archive SHA256
+`50c25dadaf35c95d82c5c843c26444452482fc67d98ca70fcc71ea15215dc74c`.
+The source contains Gemma 4 E2B/E4B support. Its CPU-only source build and CLI
+execute on Linux. Mac builds set deployment 12.0 / x86_64 and treat unguarded newer
+API availability as errors. Metal, Accelerate, OpenMP, native OpenSSL and the
+server's subprocess feature are disabled. Network providers/downloaders retain
+verified Python HTTPS. The loopback engine needs no native TLS dependency.
+
+**Native Intel Monterey engine compilation and Gemma inference remain
+unverified.** Build locally using `bash scripts/setup-gemma-macos.sh`; no weights
+are downloaded by that script. Native CPU optimization is for that build machine;
+rebuild the engine on another CPU rather than copying a host-optimized engine.
+The source ZIP and Linux-created Mac app include no runnable Mac engine.
+
+There is no newly discovered macOS 13 requirement in the added production
+binary. Original incompatibility causes remain Electron 44+/the original 45
+selection, Node 24, newer native sherpa packages and newer checked Ollama.
+No dependency was blindly upgraded. Live Gemini protocol/model access, Mac
+Keychain, audio permissions and actual GPU/CPU behavior require native/provider
+validation, independent of binary deployment metadata.

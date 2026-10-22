@@ -9,12 +9,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: boolean 
     return { error: true };
   }
   componentDidCatch(_error: Error, _info: ErrorInfo) {
-    console.error('JARVIS interface failed. Restart the application.');
+    console.error('21 interface failed. Restart the application.');
   }
   render() {
     return this.state.error ? (
       <div className="fatal-error" role="alert">
-        JARVIS could not render. Restart the application.
+        21 could not render. Restart the application.
       </div>
     ) : (
       this.props.children

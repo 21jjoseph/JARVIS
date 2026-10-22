@@ -1,3 +1,44 @@
+# V3 hybrid AI validation (21 / version 0.4.0)
+
+Validated on Linux x86_64 with Node 22.23.4, Electron 43.8.3 and Python 3.12.
+See [the detailed delivery report](v3-report.md) and [exact changes](v3-files.md).
+
+- Full cloud setup script passed: checksum-pinned Node, npm ci, Python wheels,
+  pinned CMake/Ninja, CPU llama.cpp build, compatibility, unit/backend/build and
+  actual speech-model checks. No language-model weights were downloaded.
+- **78 JavaScript tests**, **27 Python tests**, **16 actual generated-speech
+  checks**, and **five source Electron suites** passed. Voice tests triggered
+  legacy Jarvis plus Yo Twenty One, Hey Twenty One and Twenty One. These are
+  synthetic recordings, not physical microphone or accent-quality acceptance.
+- **All five Electron suites passed against the packaged Linux app** (four in
+  the combined run; desktop/persistence separately after correcting its executable
+  override). A dependency refresh overlapped the first desktop attempt and caused
+  a test installation failure; the source and packaged reruns passed afterward.
+  Dependencies must be installed before running tests, not concurrently.
+- Source-pinned llama.cpp CPU build and CLI succeeded: revision
+  d77256999f211f8c0a5b12d13564f48d685b59e7, 0.7.0-dev, GNU 14.2.0 on Linux.
+  A no-model router smoke attempt failed with subprocess support disabled;
+  it is not counted as Gemma HTTP/inference verification.
+- Linux packaging includes the receipted native CPU engine and relocatable Python,
+  without weights. Mac cross-packaging produced unsigned **release/mac/21.app**,
+  plist version **0.4.0**, minimum **12.0**. All **28** packaged Intel Mach-O
+  binaries passed <=12.0 metadata checks. No Linux engine is bundled as Mac code.
+- New websockets 15.0.1 Intel speedups target 10.13. The Python bundle's **13**
+  native binaries target at most 10.15. CMake 3.31.6 / Ninja 1.11.1.4 Mac wheels
+  were hash verified; **five** Intel slices target at most 10.10. Existing
+  Electron/Node/native npm artifact audits passed again without version upgrades.
+- Bash launcher syntax, Python compilation and git whitespace checks pass.
+  Vite retains its bundle-size advisory; upstream FastAPI TestClient emits an
+  httpx deprecation warning. No unrelated dependency upgrades were made for them.
+- **Unverified:** real Gemma E2B/E4B inference/benchmarks, Gemini key/model access,
+  live reasoning/STT/TTS, native Monterey engine/app execution, Keychain, system
+  permissions/dialogs, actual accent quality, app focus and thermal behavior.
+  No invented benchmark/quality or billing claims. See report for prerequisites.
+
+The original compatibility failures (Electron 45/44+, Node 24 and deployment13;
+newer native sherpa and checked Ollama) remain corrected. The ferrofluid shader
+is preserved. Older phase results below are historical, not the V3 acceptance.
+
 # Phase 3 validation
 
 Validated on Linux x86_64 using Node 22.23.4, Electron 43.8.3 and Python

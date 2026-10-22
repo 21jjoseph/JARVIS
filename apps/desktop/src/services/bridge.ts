@@ -26,6 +26,10 @@ function browserBridge(): DesktopBridge {
   }
   return {
     ai: {
+      configureKey:async()=>{throw new Error('Secure key entry requires the desktop app.');},
+      connection:async()=>({available:false,models:[],error:'Use the desktop app.',provider:'none'}),
+      local:async()=>{throw new Error('Local models require the desktop app.');},
+      onDelta:()=>()=>{},
       status: async () => ({
         ready: false,
         message: 'AI requires the desktop app.',

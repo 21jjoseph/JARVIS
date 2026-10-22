@@ -1,3 +1,7 @@
+> Historical phase documentation. [V3 setup and privacy rules](v3-report.md)
+> supersede the provider/branding/consent behavior below. Existing local
+> integrations remain available; optional Gemini speech needs explicit consent.
+
 # Phase 3: AI and approved desktop actions
 
 Phase 3 adds a real Python 3.12 FastAPI/Pydantic service, an Ollama adapter,

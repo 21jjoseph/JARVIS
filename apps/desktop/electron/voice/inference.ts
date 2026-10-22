@@ -21,12 +21,11 @@ export class LocalSpeech {
     this.stream?.free();
     this.kws?.free();
     const dir = this.directory('wake');
-    const tokens = keywordTokens(
-      word,
-      readFileSync(join(dir, 'tokens.txt'), 'utf8'),
-      readFileSync(join(dir, 'bpe.model')),
-    );
-    const keywords = `${tokens} @${word.toLowerCase()}\n`;
+    const keywords = Array.from(new Set([word.toLowerCase(),'yo twenty one','hey twenty one','twenty one'])).map(phrase=>{
+      const tokens=keywordTokens(phrase,readFileSync(join(dir,'tokens.txt'),'utf8'),readFileSync(join(dir,'bpe.model')));
+      // Sherpa's keyword label is whitespace-delimited even for multiword speech.
+      return `${tokens} @${phrase.replaceAll(' ','_')}`;
+    }).join('\n')+'\n';
     this.kws = sherpa.createKws({
       featConfig: { samplingRate: 16000, featureDim: 80 },
       modelConfig: {

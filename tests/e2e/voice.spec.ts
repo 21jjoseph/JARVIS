@@ -37,7 +37,7 @@ test('local voice: real capture, Whisper, Piper playback, wake word and cancella
     await expect.poll(() => app.windows().length).toBe(2);
     const page = app.windows().find((window) => window !== overlay)!;
     await page.evaluate(() =>
-      window.jarvis!.updateSettings({ locale: 'en', voiceLanguage: 'en', quality: 'low' }),
+      window.jarvis!.updateSettings({ locale: 'en', voiceLanguage: 'en', quality: 'low', wakeWord:'jarvis' }),
     );
     await page.getByRole('button', { name: 'Audio & privacy' }).click();
     const voice = page.getByTestId('voice-panel');

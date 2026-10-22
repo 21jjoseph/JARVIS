@@ -7,6 +7,9 @@ export interface Profile {
   heat: number;
 }
 export const PROFILES: Record<AvatarState, Profile> = {
+  WAKE_DETECTED:{speed:0.5,spikes:0.48,breath:0.045,glow:0.65,heat:0},
+  TRANSCRIBING:{speed:0.7,spikes:0.5,breath:0.04,glow:0.5,heat:0},
+  MUTED:{speed:0.1,spikes:0.18,breath:0.015,glow:0.14,heat:0},
   IDLE: { speed: 0.18, spikes: 0.24, breath: 0.025, glow: 0.26, heat: 0 },
   LISTENING: { speed: 0.38, spikes: 0.46, breath: 0.045, glow: 0.55, heat: 0 },
   THINKING: { speed: 0.85, spikes: 0.54, breath: 0.04, glow: 0.46, heat: 0 },

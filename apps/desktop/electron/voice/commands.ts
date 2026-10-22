@@ -1,4 +1,5 @@
 import type { VoiceLanguage } from '../../../../shared/contracts/voice';
+import { commandText } from '../../../../shared/contracts/identity';
 export interface VoiceReply {
   text: string;
   handled?: boolean;
@@ -9,17 +10,14 @@ export function interpretCommand(
   language: VoiceLanguage,
   now = new Date(),
 ): VoiceReply {
-  const normalized = text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  const normalized = commandText(text);
   const ro = language === 'ro';
   const phrase = normalized
     .trim()
-    .replace(/^jarvis[,. ]+/, '')
+    .replace(/^(?:jarvis|(?:yo |hey )?twenty one|21)[,. ]+/,'')
     .replace(/[?.!]+$/, '')
     .trim();
-  if (/^(?:jarvis[, ]+)?(?:stop|mute|opreste|taci)[.!? ]*$/.test(normalized.trim()))
+  if (/^(?:stop|mute|opreste|taci)$/.test(normalized))
     return { action: 'stop', text: '', handled: true };
   if (
     /^(?:what time(?: is it)?|what is the time|tell me the time|time|cat (?:este|e) (?:ceasul|ora)|(?:este )?ceasul|ora)$/.test(
@@ -51,8 +49,8 @@ export function interpretCommand(
       handled: true,
       action: 'none',
       text: ro
-        ? 'Salut! Sunt Jarvis, asistentul tău local.'
-        : 'Hello! I am Jarvis, your local assistant.',
+        ? 'Salut! Sunt Twenty One, asistentul tău local.'
+        : 'Hello! I am Twenty One, your local assistant.',
     };
   return {
     handled: false,

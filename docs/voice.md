@@ -1,3 +1,7 @@
+> Historical phase documentation. [V3 setup and privacy rules](v3-report.md)
+> supersede the provider/branding/consent behavior below. Existing local
+> integrations remain available; optional Gemini speech needs explicit consent.
+
 # Phase 2: local voice
 
 This milestone adds an opt-in local speech loop while retaining the Phase 1

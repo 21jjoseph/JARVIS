@@ -18,7 +18,7 @@ export function useJarvis() {
     void bridge
       .getSnapshot()
       .then(setSnapshot)
-      .catch(() => setError('Cannot connect to the desktop process. Restart JARVIS.'));
+      .catch(() => setError('Cannot connect to the desktop process. Restart 21.'));
     const stop = () => {
       void audio.stop().catch(() => {});
       void voice.stop().catch(() => {});
