@@ -14,6 +14,8 @@ export ELECTRON_BUILDER_CACHE="$PWD/.cache/electron-builder"
 if [[ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]]; then export NODE_USE_ENV_PROXY=1; fi
 npm ci --no-audit
 npm run check:compat
+node scripts/setup-backend.mjs
+npm run test:backend
 npm test
 npm run build
 npm run voice:models

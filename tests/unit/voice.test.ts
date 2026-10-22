@@ -55,9 +55,9 @@ describe('bounded local voice commands', () => {
       'none',
     );
   });
-  it('recognizes an explicit mute command and reports the demo capability honestly', () => {
+  it('recognizes an explicit mute command and keeps unknown requests available for AI routing', () => {
     expect(interpretCommand('Oprește', 'ro').action).toBe('stop');
-    expect(interpretCommand('Explain quantum mechanics', 'en').text).toContain('next phase');
+    expect(interpretCommand('Explain quantum mechanics', 'en').handled).toBe(false);
   });
 });
 describe('voice boundaries and model verification', () => {

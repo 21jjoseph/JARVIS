@@ -1,27 +1,28 @@
 # JARVIS
 
-**21Robotics · Personal hybrid AI assistant · Phase 2**
+**21Robotics · Personal hybrid AI assistant · Phase 3**
 
 A local desktop companion built around an animated, metallic ferrofluid avatar.
-The ferrofluid avatar now supports local wake-word activation, Romanian/English
-speech recognition, spoken replies and a small voice-command demo. General AI
-conversation, memory, vision, desktop automation and robotics remain later phases.
-No cloud audio processing is used.
+The ferrofluid avatar supports local Romanian/English voice, optional local or
+cloud AI, text conversation and approved desktop actions. AI provider selection
+is explicit; local commands continue to work without an AI connection. Memory,
+vision and robotics remain later phases. Microphone audio stays on the device.
 
 ## Monterey / Intel quick start
 
 Requires **macOS Monterey 12 or later on Intel x86_64**. The launcher downloads
 the official **Node 22.23.4 Intel build** into this project's `.cache/` directory,
 verifies its SHA256, and installs the locked dependencies. **nvm is not required**.
-No Python service, account or API key is needed. Internet is needed for setup.
+The launcher also prepares project-local **Python 3.12**. An account or API key
+is optional. Internet is needed for setup.
 
-First [download the Phase 2 ZIP from GitHub](https://github.com/21jjoseph/JARVIS/archive/refs/tags/phase-2.zip)
+First [download the Phase 3 ZIP from GitHub](https://github.com/21jjoseph/JARVIS/archive/refs/tags/phase-3.zip)
 and extract it on your Mac. Sign in to GitHub if requested. The GitHub ZIP
-contains a top-level `JARVIS-phase-2` folder. Quit the older JARVIS before starting
+contains a top-level `JARVIS-phase-3` folder. Quit the older JARVIS before starting
 this version. Extract the ZIP in Downloads, then run:
 
 ```sh
-cd "$HOME/Downloads/JARVIS-phase-2" && bash scripts/start-macos.sh
+cd "$HOME/Downloads/JARVIS-phase-3" && bash scripts/start-macos.sh
 ```
 
 The `&&` stops the command if the directory is missing, so npm cannot accidentally
@@ -35,7 +36,7 @@ If you have the separate `JARVIS-source.zip` bundle instead, its folder is named
 are not automatically copied to your computer.
 
 GitHub's **Code → Download ZIP** button for `main` creates a `JARVIS-main` folder;
-use that folder name for that download. The versioned Phase 2 ZIP keeps your
+use that folder name for that download. The versioned Phase 3 ZIP keeps your
 older source folder separate.
 
 If you already have **nvm installed** and prefer to manage Node yourself, use the
@@ -45,6 +46,7 @@ following from the extracted JARVIS folder instead:
 nvm install
 nvm use
 npm ci
+npm run backend:setup
 npm run dev
 ```
 
@@ -88,9 +90,9 @@ are denied in this version.
 
 Try **“Cât este ceasul?”**, **“Deschide panoul de control”**, **“Salut”**, or
 **“What time is it?”**, **“Open the control room”**, **“Hello”** in English.
-These are bounded local commands; arbitrary requests receive an explanation of
-the demo. The latest recognized phrase and reply remain in memory only.
-General conversational AI comes in Phase 3.
+These bounded commands work offline. Other requests use the selected local
+Ollama model when connected. The latest recognized phrase and reply remain in
+memory only. Voice always uses local routing.
 
 Manual microphone/amplitude testing remains available in the audio panel. Wake
 phrase, language, microphone device, rate and voice provider are configurable.
@@ -102,6 +104,30 @@ Whisper tiny can make transcription mistakes, especially on short/noisy Romanian
 phrases. The keyword model is English; pronunciation affects detection. Use
 push-to-talk when needed. Automatic acoustic barge-in is not enabled; use the
 interruption button. Recognition is utterance-based, without partial token streaming.
+
+## Use Phase 3 AI
+
+Open **AI conversation / Conversație AI**. Try **Show system info** and approve
+it once. **Open calculator**, **Open downloads**, **Read a file**, and **Find
+files named report** work without an AI model and require approval. Results stay
+on your device.
+
+For general local conversation, open a second Terminal window and run:
+
+```sh
+cd "$HOME/Downloads/JARVIS-phase-3" && bash scripts/start-local-ai-macos.sh
+```
+
+This optional command downloads a Monterey-compatible pinned Ollama CLI and
+**qwen2.5:3b** (about 1.9 GB). Keep the terminal open, choose **Refresh connection**
+in JARVIS and select **qwen2.5:3b**. Prefer 8 GB RAM or more. Intel CPU responses
+can take time. Do not install the latest Ollama blindly: a checked newer build
+requires macOS 13.
+
+Alternatively, save your own OpenAI API key in **AI connections**, choose
+**OpenAI cloud**, and approve sending each message. Keys use OS encryption.
+There is no automatic cloud fallback and no automatic sending of files or past
+messages. See [AI setup, permissions and limitations](docs/ai.md).
 
 ## What works
 
@@ -132,10 +158,12 @@ disable the setting so the login item never points at generic Electron.
 ```sh
 npm run check:compat   # pins, lockfile, Monterey/x64 configuration
 npm run typecheck
-npm test              # state, validation, settings, audio maths, origin policy
+npm test              # state, validation, settings, audio, permissions and files
+npm run backend:setup # Python 3.12 + hash-locked dependencies
+npm run test:backend  # providers, authentication, privacy and cancellation
 npm run build         # strict checks + renderer and Electron production bundles
 npm run voice:models  # verified local models; also available as a dashboard button
-npm run voice:check   # five actual keyword / STT / TTS checks; generates test WAVs
+npm run voice:check   # seven actual keyword / STT / TTS checks; generates test WAVs
 npm start             # built desktop app
 npm run test:e2e      # real Electron test; needs a graphical display
 ```
@@ -160,6 +188,7 @@ On the Intel Mac, with Node 22 selected:
 
 ```sh
 npm ci
+npm run backend:setup
 npm run dist:mac
 ```
 
@@ -188,7 +217,7 @@ shared/contracts/ Typed IPC, settings validation and state machine
 scripts/          Build, launchers, setup and compatibility audits
 tests/unit/       Logic and persistence tests
 tests/e2e/        Production Electron integration test
-services/backend/ Future Python service notes (not active)
+services/backend/ Local FastAPI service, provider adapters and tool schemas
 docs/             Implementation, compatibility and validation notes
 ```
 
@@ -200,5 +229,5 @@ codec availability depends on Electron.
 
 See the [complete created-file manifest](docs/files.md) for the exact project files.
 
-Next: validate Phase 2 on the target Mac, then implement hybrid AI/tools,
-user-controlled memory, and simulation-first robotics. See [Phase 2 details](docs/voice.md).
+Next: validate Phase 3 on the target Mac, then implement user-controlled memory
+and simulation-first robotics. See [AI details](docs/ai.md) and [voice details](docs/voice.md).

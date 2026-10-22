@@ -25,6 +25,8 @@ import { SettingsStore } from './settings';
 import { clampPosition, safeDevUrl, trustedRendererUrl } from './policy';
 import { VoiceController } from './voice/controller';
 import { validatePcm, type VoicePhase } from '../../../shared/contracts/voice';
+import { Backend } from './ai/backend';
+import { AiController } from './ai/controller';
 import { systemVoices } from './voice/system-speech';
 
 const devUrl = safeDevUrl(process.env.JARVIS_DEV_URL);
@@ -42,6 +44,8 @@ let quitting = false;
 let finalQuit = false;
 let lastAmplitudeAt = 0;
 let voice: VoiceController | undefined;
+let backend: Backend | undefined;
+let ai: AiController | undefined;
 const capabilities: Capabilities = {
   desktop: true,
   platform: process.platform,
@@ -113,6 +117,19 @@ function schedulePositionSave() {
   }, 250);
 }
 function lockWindow(win: BrowserWindow) {
+  const ownerId = win.webContents.id;
+  win.on('closed', () => {
+    ai?.forget(ownerId);
+  });
+  win.on('hide', () => {
+    void ai?.cancel(win.webContents.id);
+  });
+  win.on('minimize', () => {
+    void ai?.cancel(ownerId);
+  });
+  win.on('close', () => {
+    void ai?.cancel(win.webContents.id);
+  });
   win.on('page-title-updated', (event) => event.preventDefault());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', (event, url) => {
@@ -120,6 +137,8 @@ function lockWindow(win: BrowserWindow) {
   });
   win.webContents.on('will-attach-webview', (event) => event.preventDefault());
   win.webContents.on('render-process-gone', () => {
+    void ai?.cancel(ownerId);
+    ai?.forget(ownerId);
     if (audioOwner === win.webContents.id) releaseAudio();
   });
 }
@@ -189,7 +208,7 @@ function openDashboard() {
   if (dashboard && !dashboard.isDestroyed()) {
     dashboard.show();
     dashboard.focus();
-    return;
+    return dashboard.webContents.id;
   }
   dashboard = new BrowserWindow({
     width: 1280,
@@ -218,6 +237,7 @@ function openDashboard() {
     dashboard = null;
   });
   load(dashboard, 'dashboard');
+  return dashboard.webContents.id;
 }
 function showOverlay() {
   overlay?.show();
@@ -269,6 +289,7 @@ function registerIpc() {
   });
   handle('jarvis:state', (_event, state) => {
     if (!isState(state)) throw new Error('Unknown avatar state.');
+    if (ai?.active) throw new Error('Stop AI before previewing an avatar state.');
     runtime = transition(runtime, { type: 'SELECT', state });
     broadcast();
     return snapshot();
@@ -296,7 +317,7 @@ function registerIpc() {
   handle('jarvis:audio-claim', (event, source) => {
     if (source !== 'microphone' && source !== 'playback' && source !== 'test')
       throw new Error('Invalid audio source.');
-    if (audioOwner !== null) return false;
+    if (audioOwner !== null || ai?.active) return false;
     const owner = BrowserWindow.fromWebContents(event.sender);
     if (!owner?.isVisible() || owner.isMinimized())
       throw new Error('Show the JARVIS window before activating audio.');
@@ -308,6 +329,23 @@ function registerIpc() {
   handle('jarvis:audio-release', (event) => {
     if (audioOwner === event.sender.id) releaseAudio();
   });
+  handle('ai:status', () => ai!.status());
+  handle('ai:last', (event) => ai!.lastReply(event.sender.id));
+  handle('ai:ask', (event, input) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win?.isVisible() || win.isMinimized())
+      throw new Error('Show the window before asking AI.');
+    if (voice?.active) throw new Error('Stop voice before sending a text request.');
+    return ai!.ask(event.sender.id, input);
+  });
+  handle('ai:cancel', (event) => ai!.cancel(event.sender.id));
+  handle('ai:resolve', (event, id, approve) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win?.isVisible() || win.isMinimized())
+      throw new Error('Show the window before approving an action.');
+    return ai!.resolve(event.sender.id, id, approve);
+  });
+  handle('ai:key', (_event, key) => ai!.setKey(key));
   handle('voice:status', () => voice!.snapshot);
   handle('voice:system-voices', () => systemVoices());
   handle('voice:install', () =>
@@ -315,6 +353,7 @@ function registerIpc() {
       net.fetch(String(input), init)) as typeof fetch),
   );
   handle('voice:start', (event, mode) => {
+    if (ai?.active) throw new Error('Stop the AI request before starting voice.');
     if (mode !== 'push' && mode !== 'wake') throw new Error('Invalid voice mode.');
     return voice!.start(event.sender.id, mode);
   });
@@ -407,6 +446,29 @@ if (!app.requestSingleInstanceLock()) {
         );
       });
       session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => callback({}));
+      backend = new Backend(
+        join(__dirname, '..'),
+        app.isPackaged ? process.resourcesPath : undefined,
+      );
+      await backend.start();
+      ai = new AiController({
+        backend,
+        data: app.getPath('userData'),
+        settings: () => store.value,
+        changed: (owner, reply) => {
+          allWindows()
+            .find((w) => w.webContents.id === owner)
+            ?.webContents.send('ai:reply', reply);
+        },
+        dashboard: openDashboard,
+        phase: (state) => {
+          runtime = transition(runtime, {
+            type: runtime.source === 'none' ? 'AI_PHASE' : 'VOICE_PHASE',
+            state,
+          });
+          broadcast();
+        },
+      });
       registerIpc();
       voice = new VoiceController({
         root:
@@ -457,6 +519,20 @@ if (!app.requestSingleInstanceLock()) {
             ?.webContents.send('voice:audio', audio);
         },
         openDashboard,
+        answer: async (owner, text, signal) => {
+          const response = await ai!.ask(
+            owner,
+            { text, route: 'local', cloudConsent: false },
+            signal,
+            true,
+          );
+          return (
+            response.text ||
+            (store.value.voiceLanguage === 'ro'
+              ? 'AI local este indisponibil. Verifică panoul de conversație.'
+              : 'Local AI is unavailable. Check the conversation panel.')
+          );
+        },
       });
       await voice.initialize();
       createOverlay();
@@ -493,6 +569,8 @@ app.on('before-quit', (event) => {
   quitting = true;
   clearTimeout(moveTimer);
   if (store) releaseAudio();
+  void ai?.cancel();
+  backend?.stop();
   void (async () => {
     try {
       if (store) {

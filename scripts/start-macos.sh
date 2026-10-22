@@ -65,6 +65,7 @@ if [[ "$jarvis_install" == true ]]; then
   printf '%s\n' "$jarvis_fingerprint" > "$jarvis_dependency_stamp"
 fi
 npm run check:compat
+node scripts/setup-backend.mjs
 if [[ "${1:-}" == --setup-only ]]; then
   printf 'Setup complete. Start with: bash scripts/start-macos.sh\n'
   exit 0

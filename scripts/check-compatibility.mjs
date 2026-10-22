@@ -32,6 +32,15 @@ for (const name of [
 ]) {
   assert(lock.packages[`node_modules/${name}`], `Missing Intel macOS build tool: ${name}`);
 }
+const python = JSON.parse(readFileSync('configs/python-runtime.json', 'utf8'));
+assert.equal(python.major, 3);
+assert.equal(python.minor, 12);
+assert.equal(python.arch.family, 'x86_64');
+assert.equal(python.os, 'darwin');
+assert(/^[a-f0-9]{64}$/.test(python.sha256));
+assert(
+  python.url.startsWith('https://github.com/astral-sh/python-build-standalone/releases/download/'),
+);
 console.log(
   `Compatibility configuration passed: Node ${process.versions.node}, Electron ${pkg.devDependencies.electron}, macOS 12.0 / x64.`,
 );

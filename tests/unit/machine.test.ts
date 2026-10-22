@@ -38,3 +38,11 @@ describe('avatar state machine', () => {
     expect(failed.notice).toHaveLength(200);
   });
 });
+
+// Text AI must animate the avatar without inventing microphone ownership.
+it('AI phases update an idle avatar while preserving real audio ownership', () => {
+  const thinking = transition(INITIAL_RUNTIME, { type: 'AI_PHASE', state: 'THINKING' });
+  expect(thinking).toMatchObject({ state: 'THINKING', source: 'none', amplitude: 0 });
+  const microphone = transition(INITIAL_RUNTIME, { type: 'AUDIO_START', source: 'microphone' });
+  expect(transition(microphone, { type: 'AI_PHASE', state: 'EXECUTING' })).toEqual(microphone);
+});

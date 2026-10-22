@@ -5,6 +5,7 @@ export type Event =
   | { type: 'AMPLITUDE'; value: number }
   | { type: 'AUDIO_STOP' }
   | { type: 'VOICE_PHASE'; state: AvatarState }
+  | { type: 'AI_PHASE'; state: AvatarState }
   | { type: 'ERROR'; message: string };
 export const INITIAL_RUNTIME: Runtime = {
   state: 'IDLE',
@@ -34,6 +35,8 @@ export function transition(current: Runtime, event: Event): Runtime {
         : { ...current, amplitude: Math.max(0, Math.min(1, event.value)) };
     case 'AUDIO_STOP':
       return { ...INITIAL_RUNTIME };
+    case 'AI_PHASE':
+      return current.source === 'none' ? { ...current, state: event.state, amplitude: 0 } : current;
     case 'VOICE_PHASE':
       return current.source === 'voice'
         ? { ...current, state: event.state, amplitude: 0 }

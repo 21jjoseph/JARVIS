@@ -1,0 +1,85 @@
+.conversation-panel {
+  margin-bottom: 24px;
+  padding: 28px;
+}
+.conversation-panel > p,
+.ai-settings p {
+  font-size: 13px;
+  line-height: 1.7;
+  max-width: 850px;
+}
+.conversation-panel label {
+  display: block;
+  margin: 18px 0;
+  font-size: 13px;
+  color: #b9c9d0;
+}
+.conversation-panel input:not([type='checkbox']),
+.conversation-panel select,
+.conversation-panel textarea {
+  display: block;
+  width: 100%;
+  margin-top: 9px;
+  padding: 12px;
+  border: 1px solid #26383e;
+  border-radius: 6px;
+  background: #091218;
+  color: #d8e7eb;
+  font: inherit;
+}
+.conversation-panel select {
+  max-width: 480px;
+}
+.conversation-panel textarea {
+  resize: vertical;
+}
+.ai-settings {
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #203339;
+  border-radius: 8px;
+}
+.ai-settings summary {
+  cursor: pointer;
+  color: #62e5e5;
+  font-size: 14px;
+}
+.ai-actions {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ai-actions .primary-button {
+  width: auto;
+  min-width: 140px;
+}
+.conversation-panel .ai-consent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.ai-reply,
+.ai-result,
+.ai-approval {
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #263b42;
+  border-radius: 8px;
+}
+.ai-approval {
+  border-color: #8d7342;
+  background: #b98b1b0b;
+}
+.ai-reply p,
+.ai-result pre,
+.ai-approval pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  max-height: 420px;
+  overflow: auto;
+}

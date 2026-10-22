@@ -42,9 +42,10 @@ async function main() {
   try {
     await mkdir('.cache/voice-fixtures', { recursive: true });
     let passed = 0;
-    for (const [language, text, expected] of [
-      ['en', 'Jarvis. What time is it?', 'time'],
-      ['ro', 'Cât este ceasul?', 'ceas'],
+    for (const [language, text, expected, fixture] of [
+      ['en', 'Jarvis. What time is it?', 'time', 'en'],
+      ['ro', 'Cât este ceasul?', 'ceas', 'ro'],
+      ['en', 'Explain an electric motor.', 'motor', 'ai'],
     ] as const) {
       const audio = await worker.call<{ samples: Float32Array; sampleRate: number }>('synthesize', {
         language,
@@ -68,8 +69,8 @@ async function main() {
       );
       const padded = new Float32Array(samples.length + 16000 * 3);
       padded.set(samples);
-      await writeFile(`.cache/voice-fixtures/${language}.wav`, wave(padded));
-      if (language === 'en') {
+      await writeFile(`.cache/voice-fixtures/${fixture}.wav`, wave(padded));
+      if (fixture === 'en') {
         await worker.call('wake', { word: 'jarvis' });
         let detected = false;
         for (let at = 0; at < padded.length; at += 2048)

@@ -10,6 +10,7 @@ export const AVATAR_STATES = [
 ] as const;
 export type AvatarState = (typeof AVATAR_STATES)[number];
 export type Quality = 'auto' | 'low' | 'high';
+import type { AiBridge } from './ai';
 import type { VoiceBridge, VoiceLanguage } from './voice';
 export type AudioSource = 'none' | 'microphone' | 'playback' | 'test' | 'voice';
 export interface Settings {
@@ -29,6 +30,8 @@ export interface Settings {
   speechRate: number;
   ttsProvider: 'piper' | 'system';
   systemVoice: string;
+  localModel: string;
+  cloudModel: string;
   position: { x: number; y: number } | null;
 }
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -48,6 +51,8 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   speechRate: 1,
   ttsProvider: 'piper',
   systemVoice: '',
+  localModel: '',
+  cloudModel: 'gpt-4.1-mini',
   position: null,
 });
 export interface Runtime {
@@ -69,6 +74,7 @@ export interface Snapshot {
   capabilities: Capabilities;
 }
 export interface DesktopBridge {
+  ai: AiBridge;
   voice: VoiceBridge;
   getSnapshot(): Promise<Snapshot>;
   updateSettings(patch: Partial<Settings>): Promise<Snapshot>;
@@ -136,6 +142,14 @@ export function validateSettingsPatch(input: unknown): Partial<Settings> {
         break;
       case 'ttsProvider':
         valid = value === 'piper' || value === 'system';
+        break;
+      case 'localModel':
+        valid =
+          typeof value === 'string' && value.length <= 100 && /^[a-zA-Z0-9_.:/-]*$/.test(value);
+        break;
+      case 'cloudModel':
+        valid =
+          typeof value === 'string' && value.length <= 100 && /^[a-zA-Z0-9_.:-]+$/.test(value);
         break;
       case 'systemVoice':
         valid = typeof value === 'string' && value.length <= 100 && !/[\r\n\0]/.test(value);

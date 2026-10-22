@@ -22,6 +22,7 @@ interface Hooks {
   phase(phase: VoicePhase): void;
   audio(owner: number, audio: VoiceAudio): void;
   openDashboard(): void;
+  answer?(owner: number, text: string, signal: AbortSignal): Promise<string>;
 }
 export class VoiceController {
   private status: VoiceStatus = { ...INITIAL_VOICE };
@@ -153,9 +154,19 @@ export class VoiceController {
       return;
     }
     if (response.action === 'dashboard') this.hooks.openDashboard();
-    await this.respond(response.text, this.status.mode === 'wake' ? 'ARMED' : 'OFF', generation);
+    const reply =
+      !response.handled && this.hooks.answer
+        ? await this.hooks.answer(this.owner!, heard, this.abort!.signal)
+        : response.text;
+    if (generation !== this.generation) return;
+    await this.respond(
+      reply.slice(0, 900),
+      this.status.mode === 'wake' ? 'ARMED' : 'OFF',
+      generation,
+    );
   }
   private async respond(text: string, next: 'LISTENING' | 'ARMED' | 'OFF', generation: number) {
+    if (text.length > 400) text = text.slice(0, 397).replace(/\s+\S*$/, '') + '…';
     this.setPhase('SYNTHESIZING');
     this.patch({ reply: text });
     const {

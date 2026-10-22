@@ -5,13 +5,15 @@ import { Icon, type IconName } from '../components/Icon';
 import { useJarvis } from '../hooks/useJarvis';
 import { copy } from '../services/i18n';
 import { SettingsPanel } from './SettingsPanel';
+import { ConversationPanel } from '../ai/ConversationPanel';
 import { VoicePanel } from '../voice/VoicePanel';
 
-type Tab = 'overview' | 'lab' | 'audio' | 'settings';
+type Tab = 'overview' | 'lab' | 'audio' | 'settings' | 'chat';
 const NAV: { id: Tab; icon: IconName; number: string }[] = [
   { id: 'overview', icon: 'grid', number: '01' },
   { id: 'lab', icon: 'orb', number: '02' },
   { id: 'audio', icon: 'wave', number: '03' },
+  { id: 'chat', icon: 'grid', number: '04' },
   { id: 'settings', icon: 'sliders', number: '04' },
 ];
 export function Dashboard() {
@@ -21,6 +23,16 @@ export function Dashboard() {
   const [pending, setPending] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const source = snapshot?.runtime.source;
+  useEffect(() => {
+    const show = (reply: import('../../../../shared/contracts/ai').AiReply | null) => {
+      if (reply?.tool) setTab('chat');
+    };
+    void bridge.ai
+      .lastReply()
+      .then(show)
+      .catch(() => {});
+    return bridge.ai.onReply(show);
+  }, [bridge]);
   useEffect(() => {
     const update = () => {
       void navigator.mediaDevices
@@ -194,7 +206,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="workspace-label">
-          PERSONAL COMPANION <span>V.02</span>
+          PERSONAL COMPANION <span>V.03</span>
         </div>
         <nav aria-label="Main navigation">
           {NAV.map((item) => (
@@ -227,7 +239,7 @@ export function Dashboard() {
           </div>
           <div className="system-version">
             <span>JARVIS CORE</span>
-            <span>0.2.0</span>
+            <span>0.3.0</span>
           </div>
           <button
             className="quit-button"
@@ -276,6 +288,14 @@ export function Dashboard() {
             <SettingsPanel
               snapshot={snapshot}
               t={t}
+              update={(patch) => {
+                void run(() => bridge.updateSettings(patch));
+              }}
+            />
+          ) : tab === 'chat' ? (
+            <ConversationPanel
+              settings={settings}
+              desktop={capabilities.desktop}
               update={(patch) => {
                 void run(() => bridge.updateSettings(patch));
               }}
@@ -390,7 +410,7 @@ export function Dashboard() {
                 <Icon name="shield" />
                 <span>
                   {t.private}
-                  <small>NO CLOUD CONNECTION</small>
+                  <small>LOCAL BY DEFAULT</small>
                 </span>
               </div>
             </div>
@@ -399,7 +419,7 @@ export function Dashboard() {
             <span>
               21ROBOTICS <span className="footer-divider">/</span> PROJECT J.A.R.V.I.S.
             </span>
-            <span>{capabilities.platform.toUpperCase()} · PHASE 02</span>
+            <span>{capabilities.platform.toUpperCase()} · PHASE 03</span>
           </footer>
           {tab === 'settings' && (
             <p className="roadmap">

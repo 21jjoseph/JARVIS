@@ -78,3 +78,20 @@ Source, configuration, documentation and tests for JARVIS Phases 1–2. Models, 
 - [vite.config.ts](../vite.config.ts)
 - [vitest.config.ts](../vitest.config.ts)
 - [docs/files.md](files.md)
+
+## Phase 3 additions
+
+- `services/backend/jarvis_backend/`: local service, versioned contracts, provider
+  adapters and typed tool schemas; `requirements.lock` pins all wheel hashes.
+- `apps/desktop/electron/ai/`: Python lifecycle/client, central orchestrator,
+  independent tool validation, one-use permissions, OS adapters and audit.
+- `apps/desktop/src/ai/`: text conversation, provider setup, cloud consent and
+  per-action approval interface.
+- `shared/contracts/ai.ts`: narrow renderer-facing AI/permission contract.
+- `configs/python-runtime*.json`, `scripts/setup-backend.mjs`,
+  `scripts/bundle-backend.*`: pinned Python bootstrap and packaged runtimes.
+- `scripts/start-local-ai-macos.sh`: optional checksum-pinned compatible local
+  Ollama CLI/model setup, separate from the main launcher.
+- `services/backend/tests/`, `tests/unit/ai*.test.ts`,
+  `tests/e2e/ai*.spec.ts`: provider, privacy, permission and voice/AI checks.
+- `docs/ai.md`: AI setup, protocol, privacy, tool behavior and explicit limits.

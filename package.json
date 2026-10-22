@@ -1,6 +1,6 @@
 {
   "name": "jarvis-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "21Robotics JARVIS — a local, audio-reactive ferrofluid desktop companion",
   "author": "21Robotics",
@@ -22,10 +22,13 @@
     "voice:check": "node scripts/build-electron.mjs && node dist-electron/verify-voice.cjs",
     "build": "npm run typecheck && vite build && node scripts/build-electron.mjs",
     "start": "electron .",
-    "package": "npm run build && electron-builder --dir",
-    "dist:mac": "npm run build && electron-builder --mac",
+    "package": "npm run build && npm run backend:bundle && electron-builder --dir",
+    "dist:mac": "npm run build && npm run backend:bundle -- --mac && electron-builder --mac",
     "check:compat": "node scripts/check-compatibility.mjs",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:win": "npm run build && npm run backend:bundle -- --win && electron-builder --win",
+    "backend:setup": "node scripts/setup-backend.mjs",
+    "test:backend": "node scripts/test-backend.mjs",
+    "backend:bundle": "node scripts/bundle-backend.mjs"
   },
   "dependencies": {
     "react": "19.3.1",
@@ -88,6 +91,20 @@
         "AppImage"
       ],
       "category": "Utility"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "services/backend",
+        "to": "backend",
+        "filter": [
+          "jarvis_backend/**/*.py",
+          "requirements.lock"
+        ]
+      },
+      {
+        "from": ".cache/backend-bundle/${os}/python",
+        "to": "backend-python"
+      }
+    ]
   }
 }

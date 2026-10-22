@@ -1,3 +1,51 @@
+# Phase 3 validation
+
+Validated on Linux x86_64 using Node 22.23.4, Electron 43.8.3 and Python
+3.12.14 for development / 3.12.15 for packaged runtime.
+
+- Reproducible setup, strict TypeScript and production build pass.
+- **66 JavaScript tests**, **8 Python backend tests**, **4 source Electron
+  integration tests**, and **7 actual speech-model checks** pass, without skips.
+- AI tests start the real Python subprocess and use actual local HTTP transport
+  to a labelled Ollama fixture; cloud parsing and consent use HTTP transport
+  fixtures. They do not claim a real language model or paid cloud request.
+- Spoken AI: generated speech → Chromium capture → VAD → Whisper → Python
+  orchestrator → provider fixture → Piper → measured avatar amplitude passes.
+  Voice-triggered approval navigates to conversation; cancelling inference
+  prevents stale speech.
+- Approval ownership, expiry, denial, replay, exact argument binding, unsupported
+  tools, cloud consent, bounded files, provider errors and offline behavior pass.
+- Packaged Linux app starts its bundled relocatable Python and passes AI and
+  voice integration. Intel Mac `.app` cross-packages with Python/backend included;
+  version 0.3.0 and minimum macOS 12.0 are checked in its plist.
+- All **12** native binaries in the staged Intel Python bundle target <=12.0:
+  Python/dylibs 10.15, Pydantic core 10.12. Existing Electron/native npm binaries
+  retain verified Monterey targets. No npm dependency version was changed.
+- Checked optional Ollama CLI 0.6.8 requires macOS 13 and was rejected. The pinned
+  0.5.7 CLI's Intel slice targets 11.3; native execution remains unverified.
+- `npm audit --omit=dev`: zero reported vulnerabilities. PyPI release advisory
+  metadata for all 19 locked Python packages: no listed advisories. These are
+  point-in-time checks, not a claim of complete security.
+- A first-word KWS miss on a generated clip was diagnosed by replaying the same
+  audio with/without leading silence. A 250 ms feature-context pre-roll resolved
+  the test; neither the keyword threshold nor model pins were weakened.
+- Slow speech inference originally caused capture packets to be discarded. A
+  FIFO bounded to 16 packets (about two seconds) now preserves continuity; a
+  busy-inference unit test checks packet order. Overflow stops capture with an
+  actionable error instead of silently losing speech.
+- Both Mac launchers pass Bash syntax checks. Native bootstrap, Ollama model
+  download/inference, OpenAI credentials, Keychain storage, system file dialogs,
+  app opening/focus and all new Phase 3 behavior still need a Monterey run.
+
+No OpenAI key or local Ollama model was available in cloud. The optional model
+registry was unavailable from this environment. These are optional live-provider
+checks; offline functionality and protocol integration were actually exercised.
+DMG/signing/notarization and native Windows execution are not validated here.
+Vite emits its existing advisory chunk-size warning (~216 KB compressed).
+The backend test client emits an upstream httpx deprecation warning; tests pass.
+
+The historical Phase 1–2 results below describe those earlier milestones.
+
 # Phases 1–2 validation
 
 An additional voice integration run passed against the actual packaged Linux

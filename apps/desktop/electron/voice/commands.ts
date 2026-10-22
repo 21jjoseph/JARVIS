@@ -1,6 +1,7 @@
 import type { VoiceLanguage } from '../../../../shared/contracts/voice';
 export interface VoiceReply {
   text: string;
+  handled?: boolean;
   action: 'none' | 'dashboard' | 'stop';
 }
 export function interpretCommand(
@@ -13,9 +14,20 @@ export function interpretCommand(
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
   const ro = language === 'ro';
-  if (/\b(stop|mute|opreste|taci)\b/.test(normalized)) return { action: 'stop', text: '' };
-  if (/\b(ceas(?:ul)?|ora|time)\b/.test(normalized))
+  const phrase = normalized
+    .trim()
+    .replace(/^jarvis[,. ]+/, '')
+    .replace(/[?.!]+$/, '')
+    .trim();
+  if (/^(?:jarvis[, ]+)?(?:stop|mute|opreste|taci)[.!? ]*$/.test(normalized.trim()))
+    return { action: 'stop', text: '', handled: true };
+  if (
+    /^(?:what time(?: is it)?|what is the time|tell me the time|time|cat (?:este|e) (?:ceasul|ora)|(?:este )?ceasul|ora)$/.test(
+      phrase,
+    )
+  )
     return {
+      handled: true,
       action: 'none',
       text:
         (ro ? 'Este ora ' : 'The time is ') +
@@ -27,20 +39,26 @@ export function interpretCommand(
     /\b(panou|panoul|dashboard|control|interfata)\b/.test(normalized)
   )
     return {
+      handled: true,
       action: 'dashboard',
       text: ro ? 'Deschid panoul de control.' : 'Opening the control room.',
     };
-  if (/\b(salut|buna|hello|hi|cine|who|nume|name)\b/.test(normalized))
+  if (
+    /^(?:jarvis[, ]+)?(?:salut|buna|hello|hi)[!.? ]*$/.test(normalized.trim()) ||
+    /^(?:who are you|what is your name|cine esti|cum te cheama)[?.! ]*$/.test(normalized.trim())
+  )
     return {
+      handled: true,
       action: 'none',
       text: ro
         ? 'Salut! Sunt Jarvis, asistentul tău local.'
         : 'Hello! I am Jarvis, your local assistant.',
     };
   return {
+    handled: false,
     action: 'none',
     text: ro
-      ? 'Pot să spun ora sau să deschid panoul de control. Conversația AI va fi adăugată în faza următoare.'
-      : 'I can tell you the time or open the control room. AI conversation is planned for the next phase.',
+      ? 'AI local este indisponibil. Pot să spun ora sau să deschid panoul de control.'
+      : 'Local AI is unavailable. I can tell you the time or open the control room.',
   };
 }

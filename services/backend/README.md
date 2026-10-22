@@ -1,10 +1,12 @@
-# Future local service
+# JARVIS local AI service
 
-Phases 1–2 run inside Electron and start no Python service. FastAPI,
-WebSockets, Pydantic, SQLite memory, AI routing and robotics belong to later
-milestones. No unimplemented endpoint is presented as active.
+Python 3.12 + FastAPI/Pydantic, launched and authenticated by Electron. See
+[Phase 3 architecture and protocol](../../docs/ai.md). Setup with
+`npm run backend:setup`, test with `npm run test:backend` from repository root.
+No key or model is required for service startup and offline desktop commands.
 
-Use Python 3.12 as the future baseline. Check every native dependency on
-Monterey / Intel before adding it. Keep privileged execution and privacy
-decisions outside model output. Version future backend messages explicitly;
-the desktop contracts currently live in `shared/contracts`.
+`requirements.in` records direct choices; `requirements.lock` pins the full
+resolved graph with PyPI wheel SHA256 hashes. Install only with the repository
+setup script (hash verification and binary wheels). Optional exporters and
+native uvloop/httptools servers are not installed. The OpenTelemetry API is an
+inert FastAPI dependency; no exporter, collector or instrumentation is configured.

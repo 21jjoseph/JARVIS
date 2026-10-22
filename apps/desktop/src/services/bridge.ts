@@ -25,6 +25,24 @@ function browserBridge(): DesktopBridge {
     subscribers.forEach((fn) => fn(structuredClone(value)));
   }
   return {
+    ai: {
+      status: async () => ({
+        ready: false,
+        message: 'AI requires the desktop app.',
+        models: [],
+        keyStored: false,
+      }),
+      lastReply: async () => null,
+      ask: async () => {
+        throw new Error('AI requires the desktop app.');
+      },
+      cancel: async () => {},
+      resolve: async () => '',
+      setKey: async () => {
+        throw new Error('Secure key storage requires the desktop app.');
+      },
+      onReply: () => () => {},
+    },
     voice: {
       systemVoices: async () => [],
       status: async () => ({ ...INITIAL_VOICE }),

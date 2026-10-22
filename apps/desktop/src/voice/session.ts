@@ -12,6 +12,7 @@ export class VoiceSession {
   private generation = 0;
   private ownsSession = false;
   private busy = false;
+  private packets: Float32Array[] = [];
   private status: VoiceStatus | null = null;
   constructor(
     private bridge: DesktopBridge,
@@ -70,29 +71,41 @@ export class VoiceSession {
         };
       });
       this.capture.port.onmessage = (event: MessageEvent<Float32Array>) => {
-        if (
-          !this.ownsSession ||
-          this.busy ||
-          !['ARMED', 'LISTENING'].includes(this.status?.phase ?? '')
-        )
-          return;
+        if (!this.ownsSession || !['ARMED', 'LISTENING'].includes(this.status?.phase ?? '')) return;
         const samples = event.data;
         this.bridge.publishAmplitude(audioLevel(samples));
-        this.busy = true;
-        void this.bridge.voice
-          .feed(samples)
-          .catch((error) => {
-            this.report(error instanceof Error ? error.message : 'Voice input failed.');
-            void this.stop();
-          })
-          .finally(() => {
-            if (generation === this.generation) this.busy = false;
-          });
+        if (this.packets.length >= 16) {
+          this.report('Local speech processing cannot keep up. Select Eco graphics and try again.');
+          void this.stop();
+          return;
+        }
+        this.packets.push(samples);
+        void this.drain(generation);
       };
       this.changed(true);
     } catch (error) {
       await this.stop();
       throw error;
+    }
+  }
+  private async drain(generation: number) {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      while (generation === this.generation && this.ownsSession && this.packets.length) {
+        if (!['ARMED', 'LISTENING'].includes(this.status?.phase ?? '')) {
+          this.packets = [];
+          break;
+        }
+        await this.bridge.voice.feed(this.packets.shift()!);
+      }
+    } catch (error) {
+      if (generation === this.generation) {
+        this.report(error instanceof Error ? error.message : 'Voice input failed.');
+        await this.stop();
+      }
+    } finally {
+      if (generation === this.generation) this.busy = false;
     }
   }
   async play(audio: VoiceAudio) {
@@ -132,6 +145,7 @@ export class VoiceSession {
   async stop(notify = true) {
     this.generation++;
     this.busy = false;
+    this.packets = [];
     clearInterval(this.meter);
     if (this.output) {
       this.output.onended = null;

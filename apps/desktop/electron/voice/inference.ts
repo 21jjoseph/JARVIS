@@ -53,6 +53,10 @@ export class LocalSpeech {
     });
     if (!this.kws.handle) throw new Error('The local keyword model could not be initialized.');
     this.stream = this.kws.createStream();
+    // Prime the streaming feature context before the first spoken sample.
+    // Without this pre-roll, a wake word at frame zero can lose its initial phoneme.
+    this.stream.acceptWaveform(16000, new Float32Array(4000));
+    while (this.kws.isReady(this.stream)) this.kws.decode(this.stream);
   }
   keyword(samples: Float32Array): boolean {
     if (!this.kws || !this.stream) return false;

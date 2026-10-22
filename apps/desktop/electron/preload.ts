@@ -3,6 +3,22 @@ import type { DesktopBridge, Snapshot } from '../../../shared/contracts';
 import type { VoiceStatus, VoiceAudio } from '../../../shared/contracts/voice';
 
 const bridge: DesktopBridge = {
+  ai: {
+    status: () => ipcRenderer.invoke('ai:status'),
+    lastReply: () => ipcRenderer.invoke('ai:last'),
+    ask: (input) => ipcRenderer.invoke('ai:ask', input),
+    cancel: () => ipcRenderer.invoke('ai:cancel'),
+    resolve: (id, approve) => ipcRenderer.invoke('ai:resolve', id, approve),
+    setKey: (key) => ipcRenderer.invoke('ai:key', key),
+    onReply: (callback) => {
+      const handler = (_event: unknown, reply: import('../../../shared/contracts/ai').AiReply) =>
+        callback(reply);
+      ipcRenderer.on('ai:reply', handler);
+      return () => {
+        ipcRenderer.removeListener('ai:reply', handler);
+      };
+    },
+  },
   voice: {
     systemVoices: () => ipcRenderer.invoke('voice:system-voices'),
     status: () => ipcRenderer.invoke('voice:status'),

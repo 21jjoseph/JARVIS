@@ -1,12 +1,13 @@
 export const copy = {
   ro: {
+    chat: 'Conversație AI',
     overview: 'Control room',
     lab: 'Laborator avatar',
     audio: 'Audio & confidențialitate',
     settings: 'Preferințe',
     ready: 'Sistem local activ',
     local: 'DOAR LOCAL',
-    phase: 'FAZA 02 / VOCE LOCALĂ',
+    phase: 'FAZA 03 / AI & INSTRUMENTE',
     title: 'Inteligență în',
     titleEm: 'formă fluidă.',
     intro:
@@ -53,7 +54,7 @@ export const copy = {
     quit: 'Închide JARVIS',
     future: 'Urmează',
     futureDesc:
-      'Urmează AI hibrid → memorie → viziune & robotică. Faza 2 oferă comenzi vocale locale și răspunsuri vorbite.',
+      'Urmează memorie → viziune & robotică. Faza 3 adaugă AI local, cloud opțional și acțiuni cu aprobare.',
     graphics: 'GRAFICĂ PROCEDURALĂ',
     offline: 'INDEPENDENT DE CLOUD',
     private: 'PRIVAT IMPLICIT',
@@ -62,13 +63,14 @@ export const copy = {
     activate: 'Click: microfon · Dublu click: panou · Trage: mută',
   },
   en: {
+    chat: 'AI conversation',
     overview: 'Control room',
     lab: 'Avatar laboratory',
     audio: 'Audio & privacy',
     settings: 'Preferences',
     ready: 'Local system online',
     local: 'LOCAL ONLY',
-    phase: 'PHASE 02 / LOCAL VOICE',
+    phase: 'PHASE 03 / AI & TOOLS',
     title: 'Intelligence in',
     titleEm: 'fluid form.',
     intro:
@@ -115,7 +117,7 @@ export const copy = {
     quit: 'Quit JARVIS',
     future: 'On the horizon',
     futureDesc:
-      'Next: hybrid AI → memory → vision & robotics. Phase 2 provides local voice commands and spoken replies.',
+      'Next: memory → vision & robotics. Phase 3 adds local AI, optional cloud and actions with approval.',
     graphics: 'PROCEDURAL GRAPHICS',
     offline: 'CLOUD INDEPENDENT',
     private: 'PRIVATE BY DEFAULT',
